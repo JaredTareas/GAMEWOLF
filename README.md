@@ -2,7 +2,16 @@
 
 Sistema web para la gestion y venta de videojuegos.
 
-## Estructura inicial
+## Integrantes
+
+- LUIS JARED GARCIA GARCIA
+- LEONARDO FUENTES LOPEZ
+
+## Descripcion
+
+GameWolf es un sistema web para la gestion y venta de videojuegos. El sistema permite administrar videojuegos, usuarios, carritos y pedidos, ademas de ofrecer a los clientes la posibilidad de consultar el catalogo, realizar compras y dar seguimiento a sus pedidos.
+
+## Estructura del proyecto
 
 ```text
 GAMEWOLF/
@@ -12,11 +21,6 @@ GAMEWOLF/
   docs/      Documentacion, diagramas y notas del proyecto
   assets/    Recursos visuales originales del proyecto
 ```
-
-## Integrantes
-
-- Garcia Garcia Luis Jared
-- Fuentes Lopez Leonardo
 
 ## Enlaces
 
@@ -28,6 +32,7 @@ GAMEWOLF/
 Para revisar que esta hecho, como correr el proyecto y que falta por desarrollar:
 
 - [Guia para companero](docs/guia-para-companero.md)
+- [PDF para companero](docs/GameWolf-guia-para-companero.pdf)
 
 ## Primeros comandos locales
 
@@ -38,6 +43,7 @@ cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
+php artisan migrate --seed
 php artisan serve
 ```
 
@@ -83,9 +89,16 @@ GameWolf#2026
 - `POST /api/autenticacion/cerrar-sesion`
 - `GET /api/videojuegos`
 - `POST /api/videojuegos`
+- `GET /api/videojuegos/{videojuego}`
+- `PUT /api/videojuegos/{videojuego}`
+- `DELETE /api/videojuegos/{videojuego}`
 - `GET /api/carrito`
 - `POST /api/carrito/articulos`
+- `PUT /api/carrito/articulos/{articuloCarrito}`
+- `DELETE /api/carrito/articulos/{articuloCarrito}`
 - `GET /api/pedidos`
 - `POST /api/pedidos`
+- `GET /api/pedidos/{pedido}`
 - `PATCH /api/pedidos/{pedido}/estado`
 - `GET /api/usuarios`
+- `GET /api/usuarios/{usuario}`
