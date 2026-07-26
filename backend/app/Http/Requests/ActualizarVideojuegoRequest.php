@@ -28,7 +28,7 @@ class ActualizarVideojuegoRequest extends FormRequest
             'plataforma' => ['sometimes', 'required', 'string', 'max:80'],
             'precio' => ['sometimes', 'required', 'numeric', 'min:0'],
             'stock' => ['sometimes', 'required', 'integer', 'min:0'],
-            'imagen' => ['nullable', 'string', 'max:255'],
+            'imagen' => ['nullable'],
             'estado' => ['sometimes', 'required', 'in:activo,inactivo'],
             'genero_ids' => ['nullable', 'array'],
             'genero_ids.*' => ['integer', 'exists:generos,id'],

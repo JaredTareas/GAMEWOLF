@@ -28,7 +28,7 @@ class GuardarVideojuegoRequest extends FormRequest
             'plataforma' => ['required', 'string', 'max:80'],
             'precio' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
-            'imagen' => ['nullable', 'string', 'max:255'],
+            'imagen' => ['nullable'],
             'estado' => ['nullable', 'in:activo,inactivo'],
             'genero_ids' => ['nullable', 'array'],
             'genero_ids.*' => ['integer', 'exists:generos,id'],

@@ -14,6 +14,18 @@ import './App.css'
 
 const API_URL = 'http://127.0.0.1:8000/api'
 
+const BACKEND_URL = 'http://127.0.0.1:8000'
+
+function getImageUrl(path) {
+  if (!path) return ''
+  // Si la ruta viene de Laravel, le pegamos el dominio del backend
+  if (path.startsWith('/storage')) {
+    return `${BACKEND_URL}${path}`
+  }
+  // Si es un link externo (como las que ya tenías), lo deja igual
+  return path
+}
+
 const roles = {
   admin: {
     key: 'admin',
@@ -296,7 +308,7 @@ function ClientView({ activeView, title, usuario, token }) {
           {videojuegos.map((videojuego) => (
             <article className="game-card" key={videojuego.id}>
               <div className="game-cover">
-                {videojuego.imagen ? <img src={videojuego.imagen} alt={videojuego.titulo} /> : videojuego.titulo.slice(0, 2).toUpperCase()}
+                {videojuego.imagen ? <img src={getImageUrl(videojuego.imagen)} alt={videojuego.titulo} /> : videojuego.titulo.slice(0, 2).toUpperCase()}
               </div>
               <h3>{videojuego.titulo}</h3>
               <p>{videojuego.plataforma}</p>
@@ -395,7 +407,7 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
             <tr key={videojuego.id}>
               <td>
                 <div className="table-cover">
-                  {videojuego.imagen ? <img src={videojuego.imagen} alt={videojuego.titulo} /> : videojuego.titulo.slice(0, 2).toUpperCase()}
+                  {videojuego.imagen ? <img src={getImageUrl(videojuego.imagen)} alt={videojuego.titulo} /> : videojuego.titulo.slice(0, 2).toUpperCase()}
                 </div>
               </td>
               <td>{videojuego.titulo}</td>
@@ -489,11 +501,23 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
 
     setSaving(true)
     try {
-      await onSubmit({
-        ...form,
-        precio: Number(form.precio),
-        stock: Number(form.stock),
-      })
+      // Empaquetamos todo en FormData para poder enviar el archivo físico
+      const formData = new FormData()
+      formData.append('titulo', form.titulo)
+      formData.append('descripcion', form.descripcion)
+      formData.append('plataforma', form.plataforma)
+      formData.append('precio', Number(form.precio))
+      formData.append('stock', Number(form.stock))
+      formData.append('estado', form.estado)
+
+      // Si se subió un archivo nuevo, lo adjuntamos. Si ya había una ruta vieja (string), la mandamos para no perderla.
+      if (form.imagen instanceof File) {
+        formData.append('imagen', form.imagen)
+      } else if (typeof form.imagen === 'string' && form.imagen !== '') {
+        formData.append('imagen', form.imagen)
+      }
+
+      await onSubmit(formData)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -549,7 +573,18 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
 
         <label className="field">
           <span>Imagen</span>
-          <input value={form.imagen} onChange={(event) => updateField('imagen', event.target.value)} placeholder="/img/videojuegos/nombre.jpg" />
+          {/* Aquí reemplazamos el input de texto por el de archivo */}
+          <input 
+            type="file" 
+            accept="image/*"
+            onChange={(event) => updateField('imagen', event.target.files[0])} 
+          />
+          {/* Mostramos la ruta vieja si estamos editando y aún no sube una nueva */}
+          {typeof form.imagen === 'string' && form.imagen && (
+            <small style={{ marginTop: '5px', display: 'block', color: '#666' }}>
+              Archivo actual guardado: {form.imagen.split('/').pop()}
+            </small>
+          )}
         </label>
 
         <label className="field">
@@ -845,10 +880,20 @@ function useDashboardData(token, rol) {
     setState((current) => ({ ...current, error: '' }))
 
     try {
+      let method = videojuegoId ? 'PUT' : 'POST'
+      let body = payload
+
+      // PHP no lee archivos físicos en peticiones PUT directas.
+      // Convertimos a POST y agregamos _method = PUT al FormData.
+      if (payload instanceof FormData && videojuegoId) {
+        payload.append('_method', 'PUT')
+        method = 'POST'
+      }
+
       const response = await apiRequest(videojuegoId ? `/videojuegos/${videojuegoId}` : '/videojuegos', {
-        method: videojuegoId ? 'PUT' : 'POST',
+        method,
         token,
-        body: payload,
+        body,
       })
 
       setState((current) => ({
@@ -986,16 +1031,24 @@ function useClientData(token) {
 }
 
 async function apiRequest(path, options = {}) {
+  // Detectamos si el cuerpo es FormData para archivos
+  const isFormData = options.body instanceof FormData
+
   const headers = {
     Accept: 'application/json',
-    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+  }
+
+  // Si NO es FormData, le ponemos el Content-Type de JSON
+  if (options.body && !isFormData) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const response = await fetch(`${API_URL}${path}`, {
     method: options.method ?? 'GET',
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    // Si es FormData se manda tal cual, si no, se convierte a JSON
+    body: isFormData ? options.body : (options.body ? JSON.stringify(options.body) : undefined),
   })
 
   const data = await response.json().catch(() => ({}))
