@@ -1,0 +1,30 @@
+info:
+  name: 1. Iniciar Sesion
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/autenticacion/iniciar-sesion
+  body:
+    type: json
+    data: |-
+      {
+        "email": "admin@gamewolf.test",
+        "password": "GameWolf#2026"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if(res.status === 200) {
+          bru.setVar("token", res.body.token);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
