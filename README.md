@@ -22,6 +22,10 @@ GAMEWOLF/
   assets/    Recursos visuales originales del proyecto
 ```
 
+## Diagrama Entidad-Relación (ER)
+
+![Diagrama ER de GameWolf](./docs/diagra-ER-Game.png)
+
 ## Enlaces
 
 - Repositorio: https://github.com/JaredTareas/GAMEWOLF.git
@@ -66,7 +70,7 @@ npm.cmd run dev
 Local:
 
 ```text
-http://127.0.0.1:8000/api
+[http://127.0.0.1:8000/api](http://127.0.0.1:8000/api)
 ```
 
 ## Usuarios demo
