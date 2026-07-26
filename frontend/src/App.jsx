@@ -219,16 +219,21 @@ function Content({ usuario, token, activeView }) {
 
 function AdminEmployeeView({ usuario, token, activeView, title }) {
   const {
-    videojuegos,
-    pedidos,
-    usuarios,
-    loading,
-    error,
-    notice,
-    saveGame,
-    deleteGame,
-    updateOrderStatus,
-  } = useDashboardData(token, usuario.rol)
+  videojuegos,
+  metaVideojuegos, 
+  pedidos,
+  usuarios,
+  loading,
+  error,
+  notice,
+  saveGame,
+  deleteGame,
+  updateOrderStatus,
+  search, 
+  setSearch, 
+  page, 
+  setPage 
+} = useDashboardData(token, usuario.rol)
 
   return (
     <section className="content">
@@ -252,6 +257,10 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
       {activeView === 'Videojuegos' && (
         <GamesTable
           videojuegos={videojuegos}
+          meta={metaVideojuegos}
+          search={search}
+          onSearch={(val) => { setSearch(val); setPage(1); }} // Regresa a pag 1 al buscar
+          onPageChange={(newPage) => setPage(newPage)}
           canManage
           onSave={saveGame}
           onDelete={deleteGame}
@@ -336,7 +345,7 @@ function Metric({ label, value, tone }) {
   )
 }
 
-function GamesTable({ videojuegos, canManage = false, canDelete = false, onSave, onDelete }) {
+function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canManage = false, canDelete = false, onSave, onDelete }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingGame, setEditingGame] = useState(null)
 
@@ -352,13 +361,21 @@ function GamesTable({ videojuegos, canManage = false, canDelete = false, onSave,
 
   return (
     <DataPanel title="Gestion de videojuegos">
-      {canManage && (
-        <div className="panel-actions">
+      {/* Controles superiores: Búsqueda y botón de agregar */}
+      <div className="panel-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+        <input 
+          type="text" 
+          placeholder="Buscar videojuego..." 
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '250px' }}
+        />
+        {canManage && (
           <button className="primary-button small" type="button" onClick={openCreateModal}>
             Agregar videojuego
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       <table>
         <thead>
@@ -406,6 +423,30 @@ function GamesTable({ videojuegos, canManage = false, canDelete = false, onSave,
         </tbody>
       </table>
 
+      {/* Controles de paginación del servidor */}
+      {meta && meta.last_page > 1 && (
+        <div style={{ display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center', justifyContent: 'center' }}>
+          <button 
+            className="primary-button small" 
+            type="button" 
+            disabled={meta.current_page === 1} 
+            onClick={() => onPageChange(meta.current_page - 1)}
+          >
+            Anterior
+          </button>
+          <span>Página {meta.current_page} de {meta.last_page}</span>
+          <button 
+            className="primary-button small" 
+            type="button" 
+            disabled={meta.current_page === meta.last_page} 
+            onClick={() => onPageChange(meta.current_page + 1)}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {/* Modal de formulario */}
       {modalOpen && (
         <GameFormModal
           videojuego={editingGame}
@@ -727,7 +768,9 @@ function StatusBadge({ status }) {
 }
 
 function useDashboardData(token, rol) {
-  const [state, setState] = useState({ videojuegos: [], pedidos: [], usuarios: [], loading: true, error: '', notice: '' })
+  const [state, setState] = useState({ videojuegos: [], metaVideojuegos: null, pedidos: [], usuarios: [], loading: true, error: '', notice: '' })
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   function showNotice(message) {
     setState((current) => ({ ...current, notice: message }))
@@ -741,9 +784,17 @@ function useDashboardData(token, rol) {
     let active = true
 
     async function load() {
+      // Activamos el loading al cambiar de página o buscar
+      setState((current) => ({ ...current, loading: true, error: '' }))
+      
       try {
+        // Armamos los parámetros para la URL
+        const queryParams = new URLSearchParams()
+        if (search) queryParams.append('search', search)
+        queryParams.append('page', page)
+
         const [videojuegosRes, pedidosRes, usuariosRes] = await Promise.all([
-          apiRequest('/videojuegos'),
+          apiRequest(`/videojuegos?${queryParams.toString()}`), // URL con filtros
           apiRequest('/pedidos', { token }),
           ['admin', 'empleado'].includes(rol) ? apiRequest('/usuarios', { token }) : Promise.resolve({ data: [] }),
         ])
@@ -751,6 +802,7 @@ function useDashboardData(token, rol) {
         if (!active) return
         setState({
           videojuegos: videojuegosRes.data ?? [],
+          metaVideojuegos: videojuegosRes.meta ?? null, // 4. Guardamos la metadata
           pedidos: pedidosRes.data ?? [],
           usuarios: usuariosRes.data ?? [],
           loading: false,
@@ -762,12 +814,12 @@ function useDashboardData(token, rol) {
         setState((current) => ({ ...current, loading: false, error: err.message }))
       }
     }
-
-    load()
+    const delay = setTimeout(() => { load() }, 300)
     return () => {
       active = false
+      clearTimeout(delay)
     }
-  }, [token, rol])
+  }, [token, rol, search, page])
 
   async function updateOrderStatus(pedidoId, estado) {
     setState((current) => ({ ...current, error: '' }))
@@ -831,7 +883,7 @@ function useDashboardData(token, rol) {
     }
   }
 
-  return { ...state, saveGame, deleteGame, updateOrderStatus }
+  return { ...state, saveGame, deleteGame, updateOrderStatus, search, setSearch, page, setPage }
 }
 
 function useClientData(token) {
