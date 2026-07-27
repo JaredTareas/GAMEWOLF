@@ -394,7 +394,13 @@ function Topbar({ role, usuario, onLogout }) {
         <h2>Bienvenido, {usuario.nombre}</h2>
       </div>
       <div className="user-box">
-        <div className="avatar">{usuario.nombre.slice(0, 1)}</div>
+        <div className="avatar">
+          {usuario.imagen_perfil ? (
+            <img src={getImageUrl(usuario.imagen_perfil)} alt={usuario.nombre} />
+          ) : (
+            usuario.nombre.slice(0, 1)
+          )}
+        </div>
         <div>
           <strong>{usuario.nombre}</strong>
           <span>{usuario.email} - {role.label}</span>
@@ -1216,11 +1222,13 @@ function ProfilePanel({ usuario, token }) {
   const [form, setForm] = useState({
     nombre: usuario.nombre || '',
     telefono: usuario.telefono || '',
+    imagen_perfil: usuario.imagen_perfil || '',
   })
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [photoSaving, setPhotoSaving] = useState(false)
 
   function validateField(field, value) {
     if (field === 'nombre' && !value.trim()) return 'El nombre es obligatorio.'
@@ -1231,6 +1239,47 @@ function ProfilePanel({ usuario, token }) {
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
+  }
+
+  async function handlePhotoChange(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setApiError('')
+    setSuccessMsg('')
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setApiError('La foto debe ser JPG, PNG o WEBP.')
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setApiError('La foto no debe pesar mas de 2 MB.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('foto_perfil', file)
+
+    setPhotoSaving(true)
+    try {
+      const response = await apiRequest(`/usuarios/${usuario.id}/foto-perfil`, {
+        method: 'POST',
+        token,
+        body: formData,
+      })
+
+      const updatedUser = response.data
+      setForm((current) => ({ ...current, imagen_perfil: updatedUser.imagen_perfil || '' }))
+      localStorage.setItem('gamewolf_usuario', JSON.stringify(updatedUser))
+      window.dispatchEvent(new CustomEvent('usuario-actualizado', { detail: updatedUser }))
+      setSuccessMsg('Foto de perfil actualizada correctamente.')
+    } catch (err) {
+      setApiError(err.message || 'No se pudo actualizar la foto de perfil.')
+    } finally {
+      setPhotoSaving(false)
+      event.target.value = ''
+    }
   }
 
   async function handleSubmit(event) {
@@ -1261,7 +1310,7 @@ function ProfilePanel({ usuario, token }) {
       setSuccessMsg('Perfil actualizado correctamente.')
       
       // Actualizamos los datos locales para que persistan si recarga la página
-      const updatedUser = { ...usuario, nombre: form.nombre, telefono: form.telefono }
+      const updatedUser = response.data ?? { ...usuario, nombre: form.nombre, telefono: form.telefono }
       localStorage.setItem('gamewolf_usuario', JSON.stringify(updatedUser))
       
       // Disparamos el evento para que App.jsx actualice la barra superior instantáneamente
@@ -1277,6 +1326,14 @@ function ProfilePanel({ usuario, token }) {
   return (
     <DataPanel title="Perfil del cliente">
       <form className="profile-form" onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
+        <div className="profile-photo-preview">
+          {form.imagen_perfil ? (
+            <img src={getImageUrl(form.imagen_perfil)} alt="Vista previa de perfil" />
+          ) : (
+            <span>{form.nombre.slice(0, 1) || 'G'}</span>
+          )}
+        </div>
+
         <p className="panel-copy" style={{ marginBottom: '20px' }}>
           Actualiza tus datos de contacto. Estos se utilizarán para la entrega de tus pedidos.
         </p>
@@ -1300,6 +1357,14 @@ function ProfilePanel({ usuario, token }) {
           <span>Teléfono</span>
           <input value={form.telefono} onChange={(e) => updateField('telefono', e.target.value)} />
           {errors.telefono && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.telefono}</small>}
+        </label>
+
+        <label className="field">
+          <span>Foto de perfil</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePhotoChange} disabled={photoSaving} />
+          <small style={{ color: '#667085', marginTop: '4px' }}>
+            {photoSaving ? 'Subiendo foto...' : 'Formatos permitidos: JPG, PNG o WEBP. Maximo 2 MB.'}
+          </small>
         </label>
 
         {apiError && <p className="form-error">{apiError}</p>}

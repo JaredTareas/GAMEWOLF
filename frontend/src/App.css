@@ -378,6 +378,13 @@
   background: linear-gradient(135deg, #061427, #1c7dff);
   color: #fff;
   font-weight: 900;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-box div:not(.avatar) {
@@ -791,6 +798,27 @@ td {
   max-width: 520px;
   display: grid;
   gap: 14px;
+}
+
+.profile-photo-preview {
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #3b82f6;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #061427, #1c7dff);
+  color: #fff;
+  font-size: 42px;
+  font-weight: 900;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(28, 125, 255, 0.25);
+}
+
+.profile-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @media (max-width: 1000px) {

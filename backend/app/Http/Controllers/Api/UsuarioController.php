@@ -9,6 +9,7 @@ use App\Http\Resources\UsuarioResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UsuarioController extends Controller
 {
@@ -54,6 +55,31 @@ class UsuarioController extends Controller
         }
 
         $usuario->update($data);
+
+        return new UsuarioResource($usuario);
+    }
+
+    public function actualizarFotoPerfil(Request $request, User $usuario): UsuarioResource
+    {
+        if ($request->user()->id !== $usuario->id && $request->user()->rol !== 'admin') {
+            abort(403, 'No tienes permiso para actualizar esta foto de perfil.');
+        }
+
+        $request->validate([
+            'foto_perfil' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'foto_perfil.required' => 'Selecciona una foto de perfil.',
+            'foto_perfil.image' => 'El archivo debe ser una imagen.',
+            'foto_perfil.mimes' => 'La foto debe ser JPG, PNG o WEBP.',
+            'foto_perfil.max' => 'La foto no debe pesar mas de 2 MB.',
+        ]);
+
+        if ($usuario->imagen_perfil && str_starts_with($usuario->imagen_perfil, '/storage/perfiles/')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $usuario->imagen_perfil));
+        }
+
+        $path = $request->file('foto_perfil')->store('perfiles', 'public');
+        $usuario->update(['imagen_perfil' => "/storage/{$path}"]);
 
         return new UsuarioResource($usuario);
     }

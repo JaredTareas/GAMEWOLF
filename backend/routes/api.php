@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pedidos/{pedido}', [PedidoController::class, 'show']);
     Route::patch('/pedidos/{pedido}/estado', [PedidoController::class, 'actualizarEstado'])->middleware('rol:admin,empleado');
     Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update']);
+    Route::post('/usuarios/{usuario}/foto-perfil', [UsuarioController::class, 'actualizarFotoPerfil']);
     Route::middleware('rol:admin,empleado')->group(function () {
         Route::post('/videojuegos', [VideojuegoController::class, 'store']);
         Route::put('/videojuegos/{videojuego}', [VideojuegoController::class, 'update']);
