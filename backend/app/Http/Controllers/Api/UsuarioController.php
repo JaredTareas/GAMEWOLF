@@ -47,7 +47,14 @@ class UsuarioController extends Controller
 
     public function update(ActualizarUsuarioRequest $request, User $usuario): UsuarioResource
     {
-        $usuario->update($request->validated());
+        $data = $request->validated();
+
+        if (array_key_exists('password', $data) && blank($data['password'])) {
+            unset($data['password']);
+        }
+
+        $usuario->update($data);
+
         return new UsuarioResource($usuario);
     }
 
