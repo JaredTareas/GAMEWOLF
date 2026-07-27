@@ -360,6 +360,9 @@ function Metric({ label, value, tone }) {
 function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canManage = false, canDelete = false, onSave, onDelete }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingGame, setEditingGame] = useState(null)
+  
+  const [gameToDelete, setGameToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   function openCreateModal() {
     setEditingGame(null)
@@ -371,9 +374,16 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
     setModalOpen(true)
   }
 
+  async function handleConfirmDelete() {
+    if (!gameToDelete) return
+    setIsDeleting(true)
+    await onDelete(gameToDelete.id)
+    setIsDeleting(false)
+    setGameToDelete(null) 
+  }
+
   return (
     <DataPanel title="Gestion de videojuegos">
-      {/* Controles superiores: Búsqueda y botón de agregar */}
       <div className="panel-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
         <input 
           type="text" 
@@ -423,7 +433,11 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
                       Editar
                     </button>
                     {canDelete && (
-                      <button className="table-action danger" type="button" onClick={() => onDelete(videojuego.id)}>
+                      <button 
+                        className="table-action danger" 
+                        type="button" 
+                        onClick={() => setGameToDelete(videojuego)} // Abre el modal de confirmación
+                      >
                         Eliminar
                       </button>
                     )}
@@ -435,7 +449,6 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
         </tbody>
       </table>
 
-      {/* Controles de paginación del servidor */}
       {meta && meta.last_page > 1 && (
         <div style={{ display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center', justifyContent: 'center' }}>
           <button 
@@ -458,7 +471,6 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
         </div>
       )}
 
-      {/* Modal de formulario */}
       {modalOpen && (
         <GameFormModal
           videojuego={editingGame}
@@ -467,6 +479,17 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
             await onSave(payload, editingGame?.id)
             setModalOpen(false)
           }}
+        />
+      )}
+
+      {/* NUEVO: RENDERIZADO DEL MODAL DE CONFIRMACIÓN */}
+      {gameToDelete && (
+        <ConfirmModal
+          title="Eliminar videojuego"
+          message={`¿Estás seguro de que deseas eliminar "${gameToDelete.titulo}"? Esta acción no se puede deshacer.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setGameToDelete(null)}
+          isProcessing={isDeleting}
         />
       )}
     </DataPanel>
@@ -1082,6 +1105,42 @@ function navIcon(item) {
   }
 
   return icons[item] || <Gamepad2 size={23} strokeWidth={2.5} />
+}
+
+// Modal Confirmacion
+function ConfirmModal({ title, message, onConfirm, onCancel, isProcessing }) {
+  return (
+    <div className="modal-backdrop" role="presentation" style={{ zIndex: 100 }}>
+      <div className="modal-card" style={{ maxWidth: '400px' }}>
+        <div className="modal-heading">
+          <div>
+            <p className="eyebrow">Confirmación</p>
+            <h2 style={{ fontSize: '1.25rem' }}>{title}</h2>
+          </div>
+          <button className="icon-button" type="button" onClick={onCancel} disabled={isProcessing}>X</button>
+        </div>
+        
+        <p style={{ padding: '15px 0', color: '#4b5563', lineHeight: '1.5' }}>
+          {message}
+        </p>
+
+        <div className="modal-actions" style={{ marginTop: '10px' }}>
+          <button className="table-action" type="button" onClick={onCancel} disabled={isProcessing}>
+            Cancelar
+          </button>
+          <button 
+            className="primary-button small" 
+            style={{ backgroundColor: '#dc2626' }} 
+            type="button" 
+            onClick={onConfirm} 
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Procesando...' : 'Sí, eliminar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default App
