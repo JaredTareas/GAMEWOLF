@@ -105,30 +105,43 @@ function App() {
 }
 
 function LoginScreen({ onLogin }) {
+  const [authMode, setAuthMode] = useState('login')
   const [email, setEmail] = useState('admin@gamewolf.test')
   const [password, setPassword] = useState('GameWolf#2026')
-  const [errors, setErrors] = useState({}) 
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [resetToken, setResetToken] = useState('')
+  const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
+  const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Función de validación de correo
   function validateEmail(val) {
     if (!val) return 'El correo es obligatorio.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Ingresa un correo válido.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Ingresa un correo valido.'
     return ''
   }
 
-  // validación estricta de contraseña 
   function validatePassword(val) {
-    if (!val) return 'La contraseña es obligatoria.'
-    if (val.length < 8) return 'Mínimo 8 caracteres.'
-    if (!/[A-Z]/.test(val)) return 'Falta al menos una mayúscula.'
-    if (!/[0-9]/.test(val)) return 'Falta al menos un número.'
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(val)) return 'Falta un carácter especial.'
+    if (!val) return 'La contrasena es obligatoria.'
+    if (val.length < 8) return 'Minimo 8 caracteres.'
+    if (!/[A-Z]/.test(val)) return 'Falta al menos una mayuscula.'
+    if (!/[0-9]/.test(val)) return 'Falta al menos un numero.'
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(val)) return 'Falta un caracter especial.'
     return ''
   }
 
-  // Validaciones en tiempo real
+  function validateResetToken(val) {
+    if (!val) return 'El token de recuperacion es obligatorio.'
+    return ''
+  }
+
+  function changeMode(mode) {
+    setAuthMode(mode)
+    setErrors({})
+    setApiError('')
+    setNotice('')
+  }
+
   function handleEmailChange(e) {
     const val = e.target.value
     setEmail(val)
@@ -141,16 +154,91 @@ function LoginScreen({ onLogin }) {
     setErrors((prev) => ({ ...prev, password: validatePassword(val) }))
   }
 
+  function handlePasswordConfirmationChange(e) {
+    const val = e.target.value
+    setPasswordConfirmation(val)
+    setErrors((prev) => ({
+      ...prev,
+      password_confirmation: val !== password ? 'La confirmacion no coincide.' : '',
+    }))
+  }
+
+  function handleResetTokenChange(e) {
+    const val = e.target.value
+    setResetToken(val)
+    setErrors((prev) => ({ ...prev, token: validateResetToken(val) }))
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setApiError('')
-    
-    // Validar ambos campos al intentar enviar
+    setNotice('')
+
     const emailErr = validateEmail(email)
+
+    if (authMode === 'recover') {
+      setErrors({ email: emailErr })
+      if (emailErr) return
+
+      setLoading(true)
+      try {
+        const data = await apiRequest('/autenticacion/recuperar-contrasena', {
+          method: 'POST',
+          body: { email },
+        })
+        setNotice(`${data.mensaje} Si el correo esta en modo log, revisa backend/storage/logs/laravel.log.`)
+        setAuthMode('reset')
+      } catch (err) {
+        setApiError(err.message || 'No se pudo enviar el token de recuperacion.')
+      } finally {
+        setLoading(false)
+      }
+
+      return
+    }
+
+    if (authMode === 'reset') {
+      const tokenErr = validateResetToken(resetToken)
+      const passErr = validatePassword(password)
+      const confirmationErr = passwordConfirmation !== password ? 'La confirmacion no coincide.' : ''
+      setErrors({
+        email: emailErr,
+        token: tokenErr,
+        password: passErr,
+        password_confirmation: confirmationErr,
+      })
+
+      if (emailErr || tokenErr || passErr || confirmationErr) return
+
+      setLoading(true)
+      try {
+        const data = await apiRequest('/autenticacion/restablecer-contrasena', {
+          method: 'POST',
+          body: {
+            email,
+            token: resetToken,
+            password,
+            password_confirmation: passwordConfirmation,
+          },
+        })
+        setNotice(data.mensaje)
+        setPassword('')
+        setPasswordConfirmation('')
+        setResetToken('')
+        setAuthMode('login')
+      } catch (err) {
+        setApiError(err.message || 'No se pudo restablecer la contrasena.')
+      } finally {
+        setLoading(false)
+      }
+
+      return
+    }
+
     const passErr = validatePassword(password)
     setErrors({ email: emailErr, password: passErr })
-    
-    if (emailErr || passErr) return // Detiene el envío si hay errores
+
+    if (emailErr || passErr) return
 
     setLoading(true)
     try {
@@ -176,18 +264,23 @@ function LoginScreen({ onLogin }) {
         <form className="login-card" onSubmit={handleSubmit}>
           <img className="login-logo" src="/img/logo-gamewolf.png" alt="GameWolf" />
           <h1>GameWolf</h1>
-          <p className="muted">Ingresa tus datos para acceder al sistema</p>
+          <p className="muted">
+            {authMode === 'login' && 'Ingresa tus datos para acceder al sistema'}
+            {authMode === 'recover' && 'Solicita un token para recuperar tu contrasena'}
+            {authMode === 'reset' && 'Escribe el token recibido y tu nueva contrasena'}
+          </p>
 
-          <div className="demo-users" aria-label="Usuarios de prueba">
-            <button type="button" onClick={() => { setEmail('admin@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Admin</button>
-            <button type="button" onClick={() => { setEmail('empleado@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Empleado</button>
-            <button type="button" onClick={() => { setEmail('cliente@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Cliente</button>
-          </div>
+          {authMode === 'login' && (
+            <div className="demo-users" aria-label="Usuarios de prueba">
+              <button type="button" onClick={() => { setEmail('admin@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Admin</button>
+              <button type="button" onClick={() => { setEmail('empleado@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Empleado</button>
+              <button type="button" onClick={() => { setEmail('cliente@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Cliente</button>
+            </div>
+          )}
 
           <label className="field">
             <span>Correo electronico</span>
             <input value={email} type="email" onChange={handleEmailChange} />
-           
             {errors.email ? (
               <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.email}</small>
             ) : (
@@ -195,27 +288,73 @@ function LoginScreen({ onLogin }) {
             )}
           </label>
 
-          <label className="field">
-            <span>Contrasena</span>
-            <input value={password} type="password" onChange={handlePasswordChange} />
-            {errors.password ? (
-              <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.password}</small>
-            ) : (
-              <small>Minimo 8 caracteres, una mayuscula, un numero y un caracter especial.</small>
-            )}
-          </label>
+          {authMode === 'reset' && (
+            <label className="field">
+              <span>Token de recuperacion</span>
+              <input value={resetToken} type="text" onChange={handleResetTokenChange} />
+              {errors.token ? (
+                <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.token}</small>
+              ) : (
+                <small>Pega el token enviado al correo electronico.</small>
+              )}
+            </label>
+          )}
+
+          {authMode !== 'recover' && (
+            <label className="field">
+              <span>{authMode === 'reset' ? 'Nueva contrasena' : 'Contrasena'}</span>
+              <input value={password} type="password" onChange={handlePasswordChange} />
+              {errors.password ? (
+                <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.password}</small>
+              ) : (
+                <small>Minimo 8 caracteres, una mayuscula, un numero y un caracter especial.</small>
+              )}
+            </label>
+          )}
+
+          {authMode === 'reset' && (
+            <label className="field">
+              <span>Confirmar contrasena</span>
+              <input value={passwordConfirmation} type="password" onChange={handlePasswordConfirmationChange} />
+              {errors.password_confirmation ? (
+                <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.password_confirmation}</small>
+              ) : (
+                <small>Debe coincidir con la nueva contrasena.</small>
+              )}
+            </label>
+          )}
 
           {apiError && <p className="form-error">{apiError}</p>}
+          {notice && <p className="form-success">{notice}</p>}
 
           <button className="primary-button" type="submit" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+            {authMode === 'login' && (loading ? 'Entrando...' : 'Entrar')}
+            {authMode === 'recover' && (loading ? 'Enviando...' : 'Enviar token')}
+            {authMode === 'reset' && (loading ? 'Guardando...' : 'Restablecer contrasena')}
           </button>
+
+          {authMode === 'login' && (
+            <button className="link-button" type="button" onClick={() => changeMode('recover')}>
+              Olvidaste tu contrasena
+            </button>
+          )}
+
+          {authMode === 'recover' && (
+            <button className="link-button" type="button" onClick={() => changeMode('reset')}>
+              Ya tengo un token
+            </button>
+          )}
+
+          {authMode !== 'login' && (
+            <button className="link-button" type="button" onClick={() => changeMode('login')}>
+              Volver a iniciar sesion
+            </button>
+          )}
         </form>
       </section>
     </main>
   )
 }
-
 function Sidebar({ role, activeView, onNavigate, onLogout }) {
   return (
     <aside className={`sidebar sidebar-${role.key}`}>

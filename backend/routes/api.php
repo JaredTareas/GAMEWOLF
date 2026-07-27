@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/autenticacion/registro', [AutenticacionController::class, 'registrar']);
 Route::post('/autenticacion/iniciar-sesion', [AutenticacionController::class, 'iniciarSesion']);
+Route::post('/autenticacion/recuperar-contrasena', [AutenticacionController::class, 'solicitarRecuperacion']);
+Route::post('/autenticacion/restablecer-contrasena', [AutenticacionController::class, 'restablecerContrasena']);
 
 Route::get('/videojuegos', [VideojuegoController::class, 'index']);
 Route::get('/videojuegos/{videojuego}', [VideojuegoController::class, 'show']);

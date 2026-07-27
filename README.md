@@ -89,6 +89,8 @@ GameWolf#2026
 
 - `POST /api/autenticacion/registro`
 - `POST /api/autenticacion/iniciar-sesion`
+- `POST /api/autenticacion/recuperar-contrasena`
+- `POST /api/autenticacion/restablecer-contrasena`
 - `GET /api/autenticacion/perfil`
 - `POST /api/autenticacion/cerrar-sesion`
 - `GET /api/videojuegos`
