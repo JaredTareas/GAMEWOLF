@@ -14,10 +14,18 @@ class ActualizarUsuarioRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'nombre' => ['required', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{8,15}$/'],
         ];
+
+        // Permisos extendidos si el usuario autenticado es administrador
+        if ($this->user()->rol === 'admin') {
+            $rules['rol'] = ['required', 'in:admin,empleado,cliente'];
+            $rules['email'] = ['required', 'email', 'unique:users,email,' . $this->route('usuario')->id];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

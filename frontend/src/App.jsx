@@ -283,21 +283,23 @@ function Content({ usuario, token, activeView }) {
 
 function AdminEmployeeView({ usuario, token, activeView, title }) {
   const {
-  videojuegos,
-  metaVideojuegos, 
-  pedidos,
-  usuarios,
-  loading,
-  error,
-  notice,
-  saveGame,
-  deleteGame,
-  updateOrderStatus,
-  search, 
-  setSearch, 
-  page, 
-  setPage 
-} = useDashboardData(token, usuario.rol)
+    videojuegos,
+    metaVideojuegos, 
+    pedidos,
+    usuarios,
+    loading,
+    error,
+    notice,
+    saveGame,
+    deleteGame,
+    updateOrderStatus,
+    search, 
+    setSearch, 
+    page, 
+    setPage,
+    saveUser,   
+    deleteUser  
+  } = useDashboardData(token, usuario.rol)
 
   return (
     <section className="content">
@@ -333,7 +335,18 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
       )}
       {activeView === 'Pedidos' && <OrdersTable pedidos={pedidos} canManage onUpdateStatus={updateOrderStatus} />}
       {activeView === 'Clientes' && <CustomersTable usuarios={usuarios.filter((item) => item.rol === 'cliente')} />}
-      {activeView === 'Usuarios' && <CustomersTable usuarios={usuarios} />}
+      
+   
+      {activeView === 'Usuarios' && (
+        <CustomersTable 
+          usuarios={usuarios} 
+          canManage={usuario.rol === 'admin'} 
+          onSave={saveUser} 
+          onDelete={deleteUser} 
+        />
+      )}
+      
+
       {activeView === 'Reportes' && <ReportsPanel videojuegos={videojuegos} pedidos={pedidos} usuarios={usuarios} />}
       {activeView === 'Configuracion' && <SettingsPanel />}
 
@@ -756,9 +769,32 @@ function OrdersTable({ pedidos = [], compact = false, canManage = false, onUpdat
   )
 }
 
-function CustomersTable({ usuarios = [] }) {
+function CustomersTable({ usuarios = [], canManage = false, onSave, onDelete }) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [userToDelete, setUserToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  function openCreateModal() { setEditingUser(null); setModalOpen(true) }
+  function openEditModal(usuario) { setEditingUser(usuario); setModalOpen(true) }
+
+  async function handleConfirmDelete() {
+    if (!userToDelete) return
+    setIsDeleting(true)
+    await onDelete(userToDelete.id)
+    setIsDeleting(false)
+    setUserToDelete(null)
+  }
+
   return (
     <DataPanel title="Usuarios registrados">
+      {canManage && (
+        <div className="panel-actions" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button className="primary-button small" type="button" onClick={openCreateModal}>
+            Agregar usuario
+          </button>
+        </div>
+      )}
       <table>
         <thead>
           <tr>
@@ -766,6 +802,7 @@ function CustomersTable({ usuarios = [] }) {
             <th>Correo</th>
             <th>Telefono</th>
             <th>Rol</th>
+            {canManage && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -775,11 +812,162 @@ function CustomersTable({ usuarios = [] }) {
               <td>{usuario.email}</td>
               <td>{usuario.telefono || '-'}</td>
               <td><StatusBadge status={usuario.rol} /></td>
+              {canManage && (
+                <td>
+                  <div className="table-actions">
+                    <button className="table-action" type="button" onClick={() => openEditModal(usuario)}>
+                      Editar
+                    </button>
+                    <button className="table-action danger" type="button" onClick={() => setUserToDelete(usuario)}>
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
+
+      {modalOpen && (
+        <UserFormModal
+          usuario={editingUser}
+          onClose={() => setModalOpen(false)}
+          onSubmit={async (payload) => {
+            await onSave(payload, editingUser?.id)
+            setModalOpen(false)
+          }}
+        />
+      )}
+
+      {userToDelete && (
+        <ConfirmModal
+          title="Eliminar cuenta de usuario"
+          message={`¿Estás seguro de que deseas eliminar a "${userToDelete.nombre}"? Esta acción borrará su acceso por completo.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setUserToDelete(null)}
+          isProcessing={isDeleting}
+        />
+      )}
     </DataPanel>
+  )
+}
+
+function UserFormModal({ usuario, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    nombre: usuario?.nombre ?? '',
+    email: usuario?.email ?? '',
+    password: '',
+    telefono: usuario?.telefono ?? '',
+    rol: usuario?.rol ?? 'cliente',
+  })
+  const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function validateField(field, value) {
+    if (field === 'nombre' && !value.trim()) return 'El nombre es obligatorio.'
+    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Ingresa un correo válido.'
+    if (field === 'password' && !usuario) { // Solo es obligatoria al crear, opcional al editar
+      if (!value) return 'La contraseña es obligatoria.'
+      if (value.length < 8) return 'Mínimo 8 caracteres.'
+      if (!/[A-Z]/.test(value)) return 'Falta al menos una mayúscula.'
+      if (!/[0-9]/.test(value)) return 'Falta al menos un número.'
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) return 'Falta un carácter especial.'
+    }
+    return ''
+  }
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }))
+    if (['nombre', 'email', 'password'].includes(field)) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setApiError('')
+
+    const newErrors = {
+      nombre: validateField('nombre', form.nombre),
+      email: validateField('email', form.email),
+      password: validateField('password', form.password),
+    }
+    setErrors(newErrors)
+
+    if (Object.values(newErrors).some(msg => msg !== '')) return
+
+    setSaving(true)
+    try {
+      const payload = { ...form }
+      if (usuario && !payload.password) {
+        delete payload.password 
+      }
+      await onSubmit(payload)
+    } catch (err) {
+      setApiError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <form className="modal-card" onSubmit={handleSubmit} style={{ maxWidth: '500px' }}>
+        <div className="modal-heading">
+          <div>
+            <p className="eyebrow">Gestión de Usuarios</p>
+            <h2>{usuario ? 'Editar usuario' : 'Registrar usuario'}</h2>
+          </div>
+          <button className="icon-button" type="button" onClick={onClose}>X</button>
+        </div>
+
+        <label className="field">
+          <span>Nombre completo</span>
+          <input value={form.nombre} onChange={(e) => updateField('nombre', e.target.value)} />
+          {errors.nombre && <small style={{ color: '#dc2626' }}>{errors.nombre}</small>}
+        </label>
+
+        <div className="form-grid">
+          <label className="field">
+            <span>Correo electrónico</span>
+            <input type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} />
+            {errors.email && <small style={{ color: '#dc2626' }}>{errors.email}</small>}
+          </label>
+          <label className="field">
+            <span>Teléfono</span>
+            <input value={form.telefono} onChange={(e) => updateField('telefono', e.target.value)} />
+          </label>
+        </div>
+
+        <div className="form-grid">
+          <label className="field">
+            <span>Contraseña {usuario && '(Opcional)'}</span>
+            <input type="password" value={form.password} onChange={(e) => updateField('password', e.target.value)} />
+            {errors.password && <small style={{ color: '#dc2626' }}>{errors.password}</small>}
+          </label>
+          
+          <label className="field">
+            <span>Nivel de acceso (Rol)</span>
+            <select value={form.rol} onChange={(e) => updateField('rol', e.target.value)}>
+              <option value="cliente">Cliente</option>
+              <option value="empleado">Empleado</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
+        </div>
+
+        {apiError && <p className="form-error">{apiError}</p>}
+
+        <div className="modal-actions">
+          <button className="table-action" type="button" onClick={onClose}>Cancelar</button>
+          <button className="primary-button small" type="submit" disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar usuario'}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 
@@ -1109,8 +1297,44 @@ function useDashboardData(token, rol) {
       setState((current) => ({ ...current, error: err.message }))
     }
   }
+  
+  async function saveUser(payload, usuarioId = null) {
+    setState((current) => ({ ...current, error: '' }))
+    try {
+      const method = usuarioId ? 'PUT' : 'POST'
+      const response = await apiRequest(usuarioId ? `/usuarios/${usuarioId}` : '/usuarios', {
+        method,
+        token,
+        body: payload,
+      })
+      setState((current) => ({
+        ...current,
+        usuarios: usuarioId
+          ? current.usuarios.map((item) => (item.id === usuarioId ? response.data : item))
+          : [response.data, ...current.usuarios],
+      }))
+      showNotice(usuarioId ? 'Usuario actualizado.' : 'Usuario creado.')
+    } catch (err) {
+      setState((current) => ({ ...current, error: err.message }))
+      throw err
+    }
+  }
 
-  return { ...state, saveGame, deleteGame, updateOrderStatus, search, setSearch, page, setPage }
+  async function deleteUser(usuarioId) {
+    setState((current) => ({ ...current, error: '' }))
+    try {
+      const response = await apiRequest(`/usuarios/${usuarioId}`, { method: 'DELETE', token })
+      setState((current) => ({
+        ...current,
+        usuarios: current.usuarios.filter((item) => item.id !== usuarioId),
+      }))
+      showNotice(response.mensaje || 'Usuario eliminado.')
+    } catch (err) {
+      setState((current) => ({ ...current, error: err.message }))
+    }
+  }
+  
+  return { ...state, saveGame, deleteGame, updateOrderStatus, search, setSearch, page, setPage, saveUser, deleteUser }
 }
 
 function useClientData(token) {

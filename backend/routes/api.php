@@ -38,4 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index']);
         Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
     });
+
+    Route::middleware('rol:admin')->group(function () {
+        Route::post('/usuarios', [UsuarioController::class, 'store']);
+        Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
+    });
 });
