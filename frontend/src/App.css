@@ -460,6 +460,36 @@
   border-top: 4px solid #18a058;
 }
 
+.report-status {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #dce5f2;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.report-status h3 {
+  margin: 0;
+  color: #101828;
+  font-size: 18px;
+}
+
+.status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-summary span {
+  border: 1px solid #c7d7ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #344054;
+  font-size: 14px;
+}
+
 .data-panel {
   position: relative;
   min-width: 0;

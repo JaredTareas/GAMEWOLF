@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\PedidoController;
+use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\VideojuegoController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('rol:admin,empleado')->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index']);
         Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);
+        Route::get('/reportes/resumen', [ReporteController::class, 'resumen']);
     });
 
     Route::middleware('rol:admin')->group(function () {

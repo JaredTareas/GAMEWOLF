@@ -426,6 +426,7 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
     metaVideojuegos, 
     pedidos,
     usuarios,
+    reporte,
     loading,
     error,
     notice,
@@ -486,7 +487,7 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
       )}
       
 
-      {activeView === 'Reportes' && <ReportsPanel videojuegos={videojuegos} pedidos={pedidos} usuarios={usuarios} />}
+      {activeView === 'Reportes' && <ReportsPanel reporte={reporte} />}
       {activeView === 'Configuracion' && <SettingsPanel />}
 
       {usuario.rol === 'empleado' && activeView === 'Clientes' && (
@@ -1110,15 +1111,32 @@ function UserFormModal({ usuario, onClose, onSubmit }) {
   )
 }
 
-function ReportsPanel({ videojuegos, pedidos, usuarios }) {
-  const ventas = pedidos.reduce((total, pedido) => total + Number(pedido.total || 0), 0)
+function ReportsPanel({ reporte }) {
+  const pedidosPorEstado = reporte?.pedidos_por_estado ?? {}
 
   return (
     <DataPanel title="Reportes">
       <div className="report-grid">
-        <Metric label="Ingresos" value={`$${ventas}`} tone="green" />
-        <Metric label="Videojuegos" value={videojuegos.length} tone="blue" />
-        <Metric label="Usuarios" value={usuarios.length} tone="violet" />
+        <Metric label="Ingresos totales" value={formatCurrency(reporte?.ingresos_totales ?? 0)} tone="green" />
+        <Metric label="Ingresos de hoy" value={formatCurrency(reporte?.ingresos_hoy ?? 0)} tone="blue" />
+        <Metric label="Pedidos de hoy" value={reporte?.pedidos_hoy ?? 0} tone="violet" />
+        <Metric label="Pedidos totales" value={reporte?.pedidos_totales ?? 0} tone="green" />
+        <Metric label="Stock bajo" value={reporte?.stock_bajo ?? 0} tone="violet" />
+      </div>
+
+      <div className="report-status">
+        <h3>Pedidos por estado</h3>
+        {Object.keys(pedidosPorEstado).length === 0 ? (
+          <p className="empty-state">Todavia no hay pedidos registrados.</p>
+        ) : (
+          <div className="status-summary">
+            {Object.entries(pedidosPorEstado).map(([estado, total]) => (
+              <span key={estado}>
+                {estado}: <strong>{total}</strong>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </DataPanel>
   )
@@ -1312,7 +1330,7 @@ function StatusBadge({ status }) {
 }
 
 function useDashboardData(token, rol) {
-  const [state, setState] = useState({ videojuegos: [], metaVideojuegos: null, pedidos: [], usuarios: [], loading: true, error: '', notice: '' })
+  const [state, setState] = useState({ videojuegos: [], metaVideojuegos: null, pedidos: [], usuarios: [], reporte: null, loading: true, error: '', notice: '' })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
@@ -1337,10 +1355,11 @@ function useDashboardData(token, rol) {
         if (search) queryParams.append('search', search)
         queryParams.append('page', page)
 
-        const [videojuegosRes, pedidosRes, usuariosRes] = await Promise.all([
+        const [videojuegosRes, pedidosRes, usuariosRes, reporteRes] = await Promise.all([
           apiRequest(`/videojuegos?${queryParams.toString()}`), // URL con filtros
           apiRequest('/pedidos', { token }),
           ['admin', 'empleado'].includes(rol) ? apiRequest('/usuarios', { token }) : Promise.resolve({ data: [] }),
+          ['admin', 'empleado'].includes(rol) ? apiRequest('/reportes/resumen', { token }) : Promise.resolve({ data: null }),
         ])
 
         if (!active) return
@@ -1349,6 +1368,7 @@ function useDashboardData(token, rol) {
           metaVideojuegos: videojuegosRes.meta ?? null, // 4. Guardamos la metadata
           pedidos: pedidosRes.data ?? [],
           usuarios: usuariosRes.data ?? [],
+          reporte: reporteRes.data ?? null,
           loading: false,
           error: '',
           notice: '',
@@ -1609,6 +1629,14 @@ async function apiRequest(path, options = {}) {
 function formatDate(value) {
   if (!value) return '-'
   return new Intl.DateTimeFormat('es-MX').format(new Date(value))
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0))
 }
 
 function navIcon(item) {
