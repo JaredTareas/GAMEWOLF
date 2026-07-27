@@ -98,14 +98,52 @@ function App() {
 function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState('admin@gamewolf.test')
   const [password, setPassword] = useState('GameWolf#2026')
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({}) 
+  const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Función de validación de correo
+  function validateEmail(val) {
+    if (!val) return 'El correo es obligatorio.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Ingresa un correo válido.'
+    return ''
+  }
+
+  // validación estricta de contraseña 
+  function validatePassword(val) {
+    if (!val) return 'La contraseña es obligatoria.'
+    if (val.length < 8) return 'Mínimo 8 caracteres.'
+    if (!/[A-Z]/.test(val)) return 'Falta al menos una mayúscula.'
+    if (!/[0-9]/.test(val)) return 'Falta al menos un número.'
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(val)) return 'Falta un carácter especial.'
+    return ''
+  }
+
+  // Validaciones en tiempo real
+  function handleEmailChange(e) {
+    const val = e.target.value
+    setEmail(val)
+    setErrors((prev) => ({ ...prev, email: validateEmail(val) }))
+  }
+
+  function handlePasswordChange(e) {
+    const val = e.target.value
+    setPassword(val)
+    setErrors((prev) => ({ ...prev, password: validatePassword(val) }))
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setError('')
-    setLoading(true)
+    setApiError('')
+    
+    // Validar ambos campos al intentar enviar
+    const emailErr = validateEmail(email)
+    const passErr = validatePassword(password)
+    setErrors({ email: emailErr, password: passErr })
+    
+    if (emailErr || passErr) return // Detiene el envío si hay errores
 
+    setLoading(true)
     try {
       const data = await apiRequest('/autenticacion/iniciar-sesion', {
         method: 'POST',
@@ -113,7 +151,7 @@ function LoginScreen({ onLogin }) {
       })
       onLogin(data)
     } catch (err) {
-      setError(err.message || 'No se pudo iniciar sesion.')
+      setApiError(err.message || 'No se pudo iniciar sesion.')
     } finally {
       setLoading(false)
     }
@@ -132,31 +170,36 @@ function LoginScreen({ onLogin }) {
           <p className="muted">Ingresa tus datos para acceder al sistema</p>
 
           <div className="demo-users" aria-label="Usuarios de prueba">
-            <button type="button" onClick={() => setEmail('admin@gamewolf.test')}>Admin</button>
-            <button type="button" onClick={() => setEmail('empleado@gamewolf.test')}>Empleado</button>
-            <button type="button" onClick={() => setEmail('cliente@gamewolf.test')}>Cliente</button>
+            <button type="button" onClick={() => { setEmail('admin@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Admin</button>
+            <button type="button" onClick={() => { setEmail('empleado@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Empleado</button>
+            <button type="button" onClick={() => { setEmail('cliente@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Cliente</button>
           </div>
 
           <label className="field">
             <span>Correo electronico</span>
-            <input value={email} type="email" onChange={(event) => setEmail(event.target.value)} />
-            <small>Usa uno de los usuarios demo o escribe un correo registrado.</small>
+            <input value={email} type="email" onChange={handleEmailChange} />
+           
+            {errors.email ? (
+              <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.email}</small>
+            ) : (
+              <small>Usa uno de los usuarios demo o escribe un correo registrado.</small>
+            )}
           </label>
 
           <label className="field">
             <span>Contrasena</span>
-            <input value={password} type="password" onChange={(event) => setPassword(event.target.value)} />
-            <small>Minimo 8 caracteres, una mayuscula, un numero y un caracter especial.</small>
+            <input value={password} type="password" onChange={handlePasswordChange} />
+            {errors.password ? (
+              <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.password}</small>
+            ) : (
+              <small>Minimo 8 caracteres, una mayuscula, un numero y un caracter especial.</small>
+            )}
           </label>
 
-          {error && <p className="form-error">{error}</p>}
+          {apiError && <p className="form-error">{apiError}</p>}
 
           <button className="primary-button" type="submit" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-
-          <button className="link-button" type="button">
-            Olvidaste tu contrasena
           </button>
         </form>
       </section>
@@ -506,25 +549,49 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
     imagen: videojuego?.imagen ?? '',
     estado: videojuego?.estado ?? 'activo',
   })
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({}) 
+  const [apiError, setApiError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Reglas de validación
+  function validateField(field, value) {
+    if (field === 'titulo' && !value.trim()) return 'El título es obligatorio.'
+    if (field === 'descripcion' && !value.trim()) return 'La descripción es obligatoria.'
+    if (field === 'precio' && (value === '' || Number(value) < 0)) return 'Ingresa un precio válido (mayor o igual a 0).'
+    if (field === 'stock' && (value === '' || Number(value) < 0)) return 'Ingresa un stock válido (mayor o igual a 0).'
+    return ''
+  }
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
+    // Validar en tiempo real al escribir
+    if (['titulo', 'descripcion', 'precio', 'stock'].includes(field)) {
+      const valToValidate = typeof value === 'string' ? value : String(value)
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, valToValidate) }))
+    }
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setError('')
+    setApiError('')
 
-    if (!form.titulo.trim() || !form.descripcion.trim() || !form.plataforma.trim() || form.precio === '' || form.stock === '') {
-      setError('Completa titulo, descripcion, plataforma, precio y stock.')
+    // Validar todos los campos al intentar enviar
+    const newErrors = {
+      titulo: validateField('titulo', form.titulo),
+      descripcion: validateField('descripcion', form.descripcion),
+      precio: validateField('precio', String(form.precio)),
+      stock: validateField('stock', String(form.stock)),
+    }
+    
+    setErrors(newErrors)
+
+    // Si algún mensaje no está vacío, detenemos el envío
+    if (Object.values(newErrors).some(msg => msg !== '')) {
       return
     }
 
     setSaving(true)
     try {
-      // Empaquetamos todo en FormData para poder enviar el archivo físico
       const formData = new FormData()
       formData.append('titulo', form.titulo)
       formData.append('descripcion', form.descripcion)
@@ -533,7 +600,6 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
       formData.append('stock', Number(form.stock))
       formData.append('estado', form.estado)
 
-      // Si se subió un archivo nuevo, lo adjuntamos. Si ya había una ruta vieja (string), la mandamos para no perderla.
       if (form.imagen instanceof File) {
         formData.append('imagen', form.imagen)
       } else if (typeof form.imagen === 'string' && form.imagen !== '') {
@@ -542,7 +608,7 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
 
       await onSubmit(formData)
     } catch (err) {
-      setError(err.message)
+      setApiError(err.message)
     } finally {
       setSaving(false)
     }
@@ -562,11 +628,13 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
         <label className="field">
           <span>Titulo</span>
           <input value={form.titulo} onChange={(event) => updateField('titulo', event.target.value)} />
+          {errors.titulo && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.titulo}</small>}
         </label>
 
         <label className="field">
           <span>Descripcion</span>
           <textarea value={form.descripcion} onChange={(event) => updateField('descripcion', event.target.value)} />
+          {errors.descripcion && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.descripcion}</small>}
         </label>
 
         <div className="form-grid">
@@ -583,7 +651,8 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
 
           <label className="field">
             <span>Precio</span>
-            <input type="number" min="0" value={form.precio} onChange={(event) => updateField('precio', event.target.value)} />
+            <input type="number" min="0" step="0.01" value={form.precio} onChange={(event) => updateField('precio', event.target.value)} />
+            {errors.precio && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.precio}</small>}
           </label>
         </div>
 
@@ -591,18 +660,17 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
           <label className="field">
             <span>Stock</span>
             <input type="number" min="0" value={form.stock} onChange={(event) => updateField('stock', event.target.value)} />
+            {errors.stock && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.stock}</small>}
           </label>
         </div>
 
         <label className="field">
           <span>Imagen</span>
-          {/* Aquí reemplazamos el input de texto por el de archivo */}
           <input 
             type="file" 
             accept="image/*"
             onChange={(event) => updateField('imagen', event.target.files[0])} 
           />
-          {/* Mostramos la ruta vieja si estamos editando y aún no sube una nueva */}
           {typeof form.imagen === 'string' && form.imagen && (
             <small style={{ marginTop: '5px', display: 'block', color: '#666' }}>
               Archivo actual guardado: {form.imagen.split('/').pop()}
@@ -618,7 +686,7 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
           </select>
         </label>
 
-        {error && <p className="form-error">{error}</p>}
+        {apiError && <p className="form-error">{apiError}</p>}
 
         <div className="modal-actions">
           <button className="table-action" type="button" onClick={onClose}>
