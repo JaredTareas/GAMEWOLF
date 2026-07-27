@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActualizarUsuarioRequest;
 use App\Http\Resources\UsuarioResource;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -28,6 +29,12 @@ class UsuarioController extends Controller
 
     public function show(User $usuario): UsuarioResource
     {
+        return new UsuarioResource($usuario);
+    }
+    public function update(ActualizarUsuarioRequest $request, User $usuario): UsuarioResource
+    {
+        $usuario->update($request->validated());
+        
         return new UsuarioResource($usuario);
     }
 }

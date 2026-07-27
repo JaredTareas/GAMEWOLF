@@ -55,7 +55,16 @@ function App() {
   useEffect(() => {
     if (!usuario) return
     setActiveView(usuario.rol === 'cliente' ? 'Catalogo' : 'Inicio')
-  }, [usuario])
+  }, [usuario ? usuario.rol : null])
+
+  // NUEVO: Escuchador global para cuando el perfil se actualiza
+  useEffect(() => {
+    function handleUpdate(e) {
+      setUsuario(e.detail)
+    }
+    window.addEventListener('usuario-actualizado', handleUpdate)
+    return () => window.removeEventListener('usuario-actualizado', handleUpdate)
+  }, [])
 
   function handleLogin(data) {
     localStorage.setItem('gamewolf_token', data.token)
@@ -373,8 +382,8 @@ function ClientView({ activeView, title, usuario, token }) {
           onRemoveItem={removeCartItem}
         />
       )}
-      {activeView === 'Mis pedidos' && <OrdersTable pedidos={pedidos} compact />}
-      {activeView === 'Perfil' && <ProfilePanel usuario={usuario} />}
+      {activeView === 'Mis pedidos' && <OrdersTable pedidos={pedidos} compact />}      
+      {activeView === 'Perfil' && <ProfilePanel usuario={usuario} token={token} />}
     </section>
   )
 }
@@ -858,23 +867,105 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
   )
 }
 
-function ProfilePanel({ usuario }) {
+function ProfilePanel({ usuario, token }) {
+  const [form, setForm] = useState({
+    nombre: usuario.nombre || '',
+    telefono: usuario.telefono || '',
+  })
+  const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function validateField(field, value) {
+    if (field === 'nombre' && !value.trim()) return 'El nombre es obligatorio.'
+    if (field === 'telefono' && value && !/^[0-9+\-\s()]{8,15}$/.test(value)) return 'Ingresa un teléfono válido.'
+    return ''
+  }
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }))
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setApiError('')
+    setSuccessMsg('')
+
+    const newErrors = {
+      nombre: validateField('nombre', form.nombre),
+      telefono: validateField('telefono', form.telefono),
+    }
+    setErrors(newErrors)
+
+    if (Object.values(newErrors).some(msg => msg !== '')) return
+
+    setSaving(true)
+    try {
+      // Usamos el endpoint PUT hacia el ID del usuario
+      const response = await apiRequest(`/usuarios/${usuario.id}`, {
+        method: 'PUT',
+        token,
+        body: {
+          nombre: form.nombre,
+          telefono: form.telefono,
+        },
+      })
+      
+      setSuccessMsg('Perfil actualizado correctamente.')
+      
+      // Actualizamos los datos locales para que persistan si recarga la página
+      const updatedUser = { ...usuario, nombre: form.nombre, telefono: form.telefono }
+      localStorage.setItem('gamewolf_usuario', JSON.stringify(updatedUser))
+      
+      // Disparamos el evento para que App.jsx actualice la barra superior instantáneamente
+      window.dispatchEvent(new CustomEvent('usuario-actualizado', { detail: updatedUser }))
+
+    } catch (err) {
+      setApiError(err.message || 'No se pudo actualizar el perfil. Verifica tu conexión.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <DataPanel title="Perfil del cliente">
-      <div className="profile-form">
+      <form className="profile-form" onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
+        <p className="panel-copy" style={{ marginBottom: '20px' }}>
+          Actualiza tus datos de contacto. Estos se utilizarán para la entrega de tus pedidos.
+        </p>
+
         <label className="field">
-          <span>Nombre</span>
-          <input value={usuario.nombre} readOnly />
+          <span>Nombre completo</span>
+          <input value={form.nombre} onChange={(e) => updateField('nombre', e.target.value)} />
+          {errors.nombre && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.nombre}</small>}
         </label>
+        
         <label className="field">
-          <span>Correo electronico</span>
-          <input value={usuario.email} readOnly />
+          <span>Correo electrónico (Identificador fijo)</span>
+          <input 
+            value={usuario.email} 
+            readOnly 
+            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed', color: '#6b7280' }} 
+          />
         </label>
+        
         <label className="field">
-          <span>Telefono</span>
-          <input value={usuario.telefono || ''} readOnly />
+          <span>Teléfono</span>
+          <input value={form.telefono} onChange={(e) => updateField('telefono', e.target.value)} />
+          {errors.telefono && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.telefono}</small>}
         </label>
-      </div>
+
+        {apiError && <p className="form-error">{apiError}</p>}
+        {successMsg && <p className="toast-message" style={{ position: 'relative', marginTop: '10px', display: 'block' }}>{successMsg}</p>}
+
+        <div style={{ marginTop: '20px' }}>
+          <button className="primary-button" type="submit" disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </form>
     </DataPanel>
   )
 }
