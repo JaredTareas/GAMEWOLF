@@ -11,6 +11,7 @@ use App\Models\RegistroNotificacion;
 use App\Models\Pedido;
 use App\Models\User;
 use App\Models\Videojuego;
+use App\Services\WhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -119,12 +120,17 @@ class PedidoController extends Controller
         return new PedidoResource($pedido->load(['usuario', 'detalles.videojuego.generos']));
     }
 
-    public function actualizarEstado(ActualizarEstadoPedidoRequest $request, Pedido $pedido): JsonResponse
+    public function actualizarEstado(ActualizarEstadoPedidoRequest $request, Pedido $pedido, WhatsAppService $whatsAppService): JsonResponse
     {
         $pedido->update($request->validated());
+        $notificacion = $whatsAppService->enviarEstadoPedido($pedido->fresh(['usuario', 'detalles.videojuego.generos']));
 
         return response()->json([
             'mensaje' => 'Estado del pedido actualizado.',
+            'notificacion_whatsapp' => [
+                'estado' => $notificacion->estado,
+                'destinatario' => $notificacion->destinatario,
+            ],
             'data' => new PedidoResource($pedido->load(['usuario', 'detalles.videojuego.generos'])),
         ]);
     }

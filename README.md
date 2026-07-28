@@ -112,3 +112,31 @@ GameWolf#2026
 - `PATCH /api/pedidos/{pedido}/estado`
 - `GET /api/usuarios`
 - `GET /api/usuarios/{usuario}`
+
+## Notificacion por WhatsApp
+
+La notificacion por WhatsApp se dispara cuando un administrador o empleado cambia el estado de un pedido desde el modulo de pedidos.
+
+Flujo:
+
+1. El cliente realiza un pedido.
+2. El administrador o empleado actualiza el estado del pedido.
+3. El endpoint `PATCH /api/pedidos/{pedido}/estado` guarda el nuevo estado.
+4. El backend manda un mensaje de WhatsApp al telefono del cliente usando Twilio.
+5. El intento de envio queda guardado en la tabla `registros_notificacion`.
+
+Variables necesarias en `backend/.env`:
+
+```env
+TWILIO_SID=tu_account_sid
+TWILIO_TOKEN=tu_auth_token
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+```
+
+El telefono del cliente debe estar guardado con lada, por ejemplo:
+
+```text
++5215550001001
+```
+
+Si faltan las credenciales de Twilio o el cliente no tiene telefono, el sistema no se rompe; solo guarda el registro de notificacion como pendiente o fallido.
