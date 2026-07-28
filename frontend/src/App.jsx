@@ -18,11 +18,16 @@ const BACKEND_URL = 'http://127.0.0.1:8000'
 
 function getImageUrl(path) {
   if (!path) return ''
-  // Si la ruta viene de Laravel, le pegamos el dominio del backend
-  if (path.startsWith('/storage')) {
-    return `${BACKEND_URL}${path}`
+  
+  // Si es un enlace externo completo, lo dejamos pasar
+  if (path.startsWith('http')) return path;
+
+  // Si trae la palabra storage (con o sin diagonal), le pegamos el dominio del backend
+  if (path.includes('storage/')) {
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${BACKEND_URL}${cleanPath}`;
   }
-  // Si es un link externo (como las que ya tenías), lo deja igual
+  
   return path
 }
 
@@ -30,12 +35,14 @@ const roles = {
   admin: {
     key: 'admin',
     label: 'Administrador',
-    nav: ['Inicio', 'Videojuegos', 'Pedidos', 'Clientes', 'Usuarios', 'Reportes', 'Configuracion'],
+    // Agregamos 'Perfil' al final del arreglo
+    nav: ['Inicio', 'Videojuegos', 'Pedidos', 'Clientes', 'Usuarios', 'Reportes', 'Configuracion', 'Perfil'],
   },
   empleado: {
     key: 'empleado',
     label: 'Empleado',
-    nav: ['Inicio', 'Videojuegos', 'Pedidos', 'Clientes'],
+    // Agregamos 'Perfil' al final del arreglo
+    nav: ['Inicio', 'Videojuegos', 'Pedidos', 'Clientes', 'Perfil'],
   },
   cliente: {
     key: 'cliente',
@@ -43,7 +50,6 @@ const roles = {
     nav: ['Catalogo', 'Carrito', 'Mis pedidos', 'Perfil'],
   },
 }
-
 function App() {
   const [usuario, setUsuario] = useState(() => {
     const saved = localStorage.getItem('gamewolf_usuario')
@@ -106,6 +112,7 @@ function App() {
 
 function LoginScreen({ onLogin }) {
   const [authMode, setAuthMode] = useState('login')
+  const [formName, setFormName] = useState('') 
   const [email, setEmail] = useState('admin@gamewolf.test')
   const [password, setPassword] = useState('GameWolf#2026')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
@@ -175,6 +182,38 @@ function LoginScreen({ onLogin }) {
     setNotice('')
 
     const emailErr = validateEmail(email)
+
+    if (authMode === 'register') {
+      const nameErr = !formName.trim() ? 'El nombre es obligatorio.' : ''
+      const passErr = validatePassword(password)
+      const confirmationErr = passwordConfirmation !== password ? 'La confirmacion no coincide.' : ''
+      
+      setErrors({ email: emailErr, password: passErr, password_confirmation: confirmationErr, nombre: nameErr })
+      if (emailErr || passErr || confirmationErr || nameErr) return
+
+      setLoading(true)
+      try {
+        await apiRequest('/autenticacion/registro', {
+          method: 'POST',
+          body: { 
+            nombre: formName, 
+            email, 
+            password, 
+            password_confirmation: passwordConfirmation, 
+            rol: 'cliente' 
+          },
+        })
+        setNotice('Cuenta creada con éxito. Ahora puedes iniciar sesión.')
+        setAuthMode('login')
+        setPassword('')
+        setPasswordConfirmation('')
+      } catch (err) {
+        setApiError(err.message || 'No se pudo crear la cuenta.')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
     if (authMode === 'recover') {
       setErrors({ email: emailErr })
@@ -270,6 +309,7 @@ function LoginScreen({ onLogin }) {
           <h1>GameWolf</h1>
           <p className="muted">
             {authMode === 'login' && 'Ingresa tus datos para acceder al sistema'}
+            {authMode === 'register' && 'Crea una cuenta para comprar videojuegos'}
             {authMode === 'recover' && 'Solicita un token para recuperar tu contrasena'}
             {authMode === 'reset' && 'Escribe el token recibido y tu nueva contrasena'}
           </p>
@@ -280,6 +320,17 @@ function LoginScreen({ onLogin }) {
               <button type="button" onClick={() => { setEmail('empleado@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Empleado</button>
               <button type="button" onClick={() => { setEmail('cliente@gamewolf.test'); setPassword('GameWolf#2026'); setErrors({}) }}>Cliente</button>
             </div>
+          )}
+
+          {authMode === 'register' && (
+            <label className="field">
+              <span>Nombre completo</span>
+              <input value={formName} type="text" onChange={(e) => {
+                setFormName(e.target.value)
+                setErrors((prev) => ({ ...prev, nombre: !e.target.value ? 'El nombre es obligatorio.' : '' }))
+              }} />
+              {errors.nombre && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.nombre}</small>}
+            </label>
           )}
 
           <label className="field">
@@ -316,31 +367,37 @@ function LoginScreen({ onLogin }) {
             </label>
           )}
 
-          {authMode === 'reset' && (
+          {(authMode === 'reset' || authMode === 'register') && (
             <label className="field">
               <span>Confirmar contrasena</span>
               <input value={passwordConfirmation} type="password" onChange={handlePasswordConfirmationChange} />
               {errors.password_confirmation ? (
                 <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.password_confirmation}</small>
               ) : (
-                <small>Debe coincidir con la nueva contrasena.</small>
+                <small>Debe coincidir con la {authMode === 'reset' ? 'nueva ' : ''}contrasena.</small>
               )}
             </label>
           )}
 
           {apiError && <p className="form-error">{apiError}</p>}
-          {notice && <p className="form-success">{notice}</p>}
+          {notice && <p className="form-success" style={{ color: '#16a34a' }}>{notice}</p>}
 
           <button className="primary-button" type="submit" disabled={loading}>
             {authMode === 'login' && (loading ? 'Entrando...' : 'Entrar')}
+            {authMode === 'register' && (loading ? 'Creando...' : 'Crear cuenta')}
             {authMode === 'recover' && (loading ? 'Enviando...' : 'Enviar token')}
             {authMode === 'reset' && (loading ? 'Guardando...' : 'Restablecer contrasena')}
           </button>
 
           {authMode === 'login' && (
-            <button className="link-button" type="button" onClick={() => changeMode('recover')}>
-              Olvidaste tu contraseña
-            </button>
+            <>
+              <button className="link-button" type="button" onClick={() => changeMode('recover')}>
+                Olvidaste tu contraseña
+              </button>
+              <button className="link-button" type="button" onClick={() => changeMode('register')} style={{ marginTop: '10px' }}>
+                ¿No tienes cuenta? Regístrate aquí
+              </button>
+            </>
           )}
 
           {authMode === 'recover' && (
@@ -391,6 +448,10 @@ function Sidebar({ role, activeView, onNavigate, onLogout }) {
 }
 
 function Topbar({ role, usuario, onLogout }) {
+  // Buscamos la foto en cualquiera de los dos nombres que haya usado tu compañero
+  const foto = usuario.imagen_perfil || usuario.foto_perfil;
+  const tieneFoto = foto && foto !== '';
+
   return (
     <header className="topbar">
       <div>
@@ -398,13 +459,18 @@ function Topbar({ role, usuario, onLogout }) {
         <h2>Bienvenido, {usuario.nombre}</h2>
       </div>
       <div className="user-box">
-        <div className="avatar">
-          {usuario.imagen_perfil ? (
-            <img src={getImageUrl(usuario.imagen_perfil)} alt={usuario.nombre} />
+        <div className="avatar" style={{ overflow: 'hidden' }}>
+          {tieneFoto ? (
+            <img 
+              src={getImageUrl(foto)} 
+              alt="Perfil" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
           ) : (
-            usuario.nombre.slice(0, 1)
+            usuario.nombre.slice(0, 1).toUpperCase()
           )}
         </div>
+        
         <div>
           <strong>{usuario.nombre}</strong>
           <span>{usuario.email} - {role.label}</span>
@@ -499,7 +565,7 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
 
       {activeView === 'Reportes' && <ReportsPanel reporte={reporte} />}
       {activeView === 'Configuracion' && <SettingsPanel />}
-
+      {activeView === 'Perfil' && <ProfilePanel usuario={usuario} token={token} />}
       {usuario.rol === 'empleado' && activeView === 'Clientes' && (
         <p className="notice">El empleado puede consultar clientes, pero no editar usuarios ni roles.</p>
       )}
