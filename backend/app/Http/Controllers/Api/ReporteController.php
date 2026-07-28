@@ -14,6 +14,7 @@ class ReporteController extends Controller
     public function resumen(): JsonResponse
     {
         $hoy = now()->toDateString();
+        $estadosConIngreso = ['pagado', 'enviado', 'entregado'];
 
         $pedidosPorEstado = Pedido::query()
             ->select('estado', DB::raw('COUNT(*) as total'))
@@ -22,8 +23,8 @@ class ReporteController extends Controller
 
         return response()->json([
             'data' => [
-                'ingresos_totales' => (float) Pedido::sum('total'),
-                'ingresos_hoy' => (float) Pedido::whereDate('fecha_pedido', $hoy)->sum('total'),
+                'ingresos_totales' => (float) Pedido::whereIn('estado', $estadosConIngreso)->sum('total'),
+                'ingresos_hoy' => (float) Pedido::whereIn('estado', $estadosConIngreso)->whereDate('fecha_pedido', $hoy)->sum('total'),
                 'pedidos_totales' => Pedido::count(),
                 'pedidos_hoy' => Pedido::whereDate('fecha_pedido', $hoy)->count(),
                 'usuarios_totales' => User::count(),
