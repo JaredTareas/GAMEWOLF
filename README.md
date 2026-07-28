@@ -22,9 +22,13 @@ GAMEWOLF/
   assets/    Recursos visuales originales del proyecto
 ```
 
-## Diagrama Entidad-Relación (ER)
+## Diagrama Entidad-Relación (ER) Y Diagrama Relacional
 
-![Diagrama ER de GameWolf](./docs/diagra-ER-Game.png)
+Diagrama ER <img width="1536" height="1024" alt="relacion gamewolf" src="https://github.com/user-attachments/assets/6287c0c0-e1c4-4538-8924-74b18acdc7c2" />
+
+
+
+![Diagrama Relacional de GameWolf](./docs/diagra-ER-Game.png)
 
 ## Enlaces
 
