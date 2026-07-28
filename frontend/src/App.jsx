@@ -258,6 +258,10 @@ function LoginScreen({ onLogin }) {
     <main className="login-screen">
       <section className="login-art" aria-label="GameWolf">
         <img src="/img/fondo-login.png" alt="" />
+        <div className="login-art-overlay">
+          <span>GameWolf Store</span>
+          <strong>Gestiona, vende y controla tus videojuegos</strong>
+        </div>
       </section>
 
       <section className="login-panel">
@@ -335,7 +339,7 @@ function LoginScreen({ onLogin }) {
 
           {authMode === 'login' && (
             <button className="link-button" type="button" onClick={() => changeMode('recover')}>
-              Olvidaste tu contrasena
+              Olvidaste tu contraseña
             </button>
           )}
 
