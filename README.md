@@ -28,7 +28,7 @@ Diagrama ER <img width="1536" height="1024" alt="relacion gamewolf" src="https:/
 
 
 
-![Diagrama Relacional de GameWolf](./docs/diagra-ER-Game.png)
+Diagrama Relacional ![Diagrama Relacional de GameWolf](./docs/diagra-ER-Game.png)
 
 ## Enlaces
 
