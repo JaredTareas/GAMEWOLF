@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\IniciarSesionRequest;
 use App\Http\Requests\Auth\RegistrarUsuarioRequest;
 use App\Http\Requests\Auth\RestablecerContrasenaRequest;
 use App\Http\Requests\Auth\SolicitarRecuperacionRequest;
+use App\Mail\RestablecerContrasena;
 use App\Http\Resources\UsuarioResource;
 use App\Models\User;
 use App\Services\CorreoBienvenidaService;
@@ -61,23 +62,23 @@ class AutenticacionController extends Controller
 
     public function solicitarRecuperacion(SolicitarRecuperacionRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->validated('email'))->firstOrFail();
-        $token = Password::broker()->createToken($user);
+        $user = User::where('email', $request->validated('email'))->first();
 
-        Mail::raw(
-            "Hola {$user->nombre}.\n\n".
-            "Usa este token para restablecer tu contrasena en GameWolf:\n\n".
-            "{$token}\n\n".
-            "El token vence en 60 minutos. Si no solicitaste este cambio, ignora este mensaje.",
-            function ($message) use ($user) {
-                $message
-                    ->to($user->email)
-                    ->subject('Recuperacion de contrasena - GameWolf');
-            }
-        );
+        if ($user) {
+            $token = Password::broker()->createToken($user);
+            $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+            $urlRestablecimiento = $frontendUrl.'/?'.http_build_query([
+                'mode' => 'reset',
+                'email' => $user->email,
+                'token' => $token,
+            ]);
+
+            Mail::to($user->email, $user->nombre)
+                ->send(new RestablecerContrasena($user, $urlRestablecimiento));
+        }
 
         return response()->json([
-            'mensaje' => 'Se envio un token de recuperacion al correo indicado.',
+            'mensaje' => 'Si el correo esta registrado, recibiras un enlace para restablecer tu contrasena.',
         ]);
     }
 

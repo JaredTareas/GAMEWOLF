@@ -17,7 +17,7 @@ class SolicitarRecuperacionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
         ];
     }
 
@@ -29,7 +29,6 @@ class SolicitarRecuperacionRequest extends FormRequest
         return [
             'email.required' => 'El correo electronico es obligatorio.',
             'email.email' => 'Ingresa un correo electronico valido.',
-            'email.exists' => 'No existe una cuenta registrada con ese correo.',
         ];
     }
 }

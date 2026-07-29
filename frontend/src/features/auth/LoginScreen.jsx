@@ -2,12 +2,17 @@ import { useState } from 'react'
 import { apiRequest } from '../../services/api'
 
 export default function LoginScreen({ onLogin }) {
-  const [authMode, setAuthMode] = useState('login')
+  const recoveryParams = new URLSearchParams(window.location.search)
+  const openedFromRecoveryLink = recoveryParams.get('mode') === 'reset'
+    && Boolean(recoveryParams.get('email'))
+    && Boolean(recoveryParams.get('token'))
+
+  const [authMode, setAuthMode] = useState(openedFromRecoveryLink ? 'reset' : 'login')
   const [formName, setFormName] = useState('') 
-  const [email, setEmail] = useState('admin@gamewolf.test')
-  const [password, setPassword] = useState('GameWolf#2026')
+  const [email, setEmail] = useState(recoveryParams.get('email') || 'admin@gamewolf.test')
+  const [password, setPassword] = useState(openedFromRecoveryLink ? '' : 'GameWolf#2026')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
-  const [resetToken, setResetToken] = useState('')
+  const [resetToken, setResetToken] = useState(recoveryParams.get('token') || '')
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [notice, setNotice] = useState('')
@@ -38,6 +43,15 @@ export default function LoginScreen({ onLogin }) {
     setErrors({})
     setApiError('')
     setNotice('')
+
+    if (['recover', 'reset', 'register'].includes(mode)) {
+      setPassword('')
+      setPasswordConfirmation('')
+    }
+
+    if (mode !== 'reset' && window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
   }
 
   function handleEmailChange(e) {
@@ -116,8 +130,9 @@ export default function LoginScreen({ onLogin }) {
           method: 'POST',
           body: { email },
         })
-        setNotice(`${data.mensaje} Si el correo esta en modo log, revisa backend/storage/logs/laravel.log.`)
-        setAuthMode('reset')
+        setNotice(data.mensaje || 'Revisa tu correo para continuar.')
+        setPassword('')
+        setPasswordConfirmation('')
       } catch (err) {
         setApiError(err.message || 'No se pudo enviar el token de recuperación.')
       } finally {
@@ -156,6 +171,7 @@ export default function LoginScreen({ onLogin }) {
         setPasswordConfirmation('')
         setResetToken('')
         setAuthMode('login')
+        window.history.replaceState({}, document.title, window.location.pathname)
       } catch (err) {
         setApiError(err.message || 'No se pudo restablecer la contraseña.')
       } finally {
@@ -201,8 +217,8 @@ export default function LoginScreen({ onLogin }) {
           <p className="muted">
             {authMode === 'login' && 'Ingresa tus datos para acceder al sistema'}
             {authMode === 'register' && 'Crea una cuenta para comprar videojuegos'}
-            {authMode === 'recover' && 'Solicita un token para recuperar tu contraseña'}
-            {authMode === 'reset' && 'Escribe el token recibido y tu nueva contraseña'}
+            {authMode === 'recover' && 'Solicita un enlace para recuperar tu contraseña'}
+            {authMode === 'reset' && 'Define una nueva contraseña para recuperar tu cuenta'}
           </p>
 
           {authMode === 'login' && (
@@ -230,11 +246,17 @@ export default function LoginScreen({ onLogin }) {
             {errors.email ? (
               <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.email}</small>
             ) : (
-              <small>Usa uno de los usuarios demo o escribe un correo registrado.</small>
+              <small>
+                {authMode === 'recover'
+                  ? 'Te enviaremos un enlace seguro si el correo está registrado.'
+                  : authMode === 'reset'
+                    ? 'Usa el correo asociado al enlace recibido.'
+                    : 'Usa uno de los usuarios demo o escribe un correo registrado.'}
+              </small>
             )}
           </label>
 
-          {authMode === 'reset' && (
+          {authMode === 'reset' && !resetToken && (
             <label className="field">
               <span>Token de recuperación</span>
               <input value={resetToken} type="text" onChange={handleResetTokenChange} />
@@ -244,6 +266,10 @@ export default function LoginScreen({ onLogin }) {
                 <small>Pega el token enviado al correo electrónico.</small>
               )}
             </label>
+          )}
+
+          {authMode === 'reset' && resetToken && (
+            <p className="form-success">Usaremos el enlace recibido. Solo escribe y confirma tu nueva contraseña.</p>
           )}
 
           {authMode !== 'recover' && (
@@ -276,7 +302,7 @@ export default function LoginScreen({ onLogin }) {
           <button className="primary-button" type="submit" disabled={loading}>
             {authMode === 'login' && (loading ? 'Entrando...' : 'Entrar')}
             {authMode === 'register' && (loading ? 'Creando...' : 'Crear cuenta')}
-            {authMode === 'recover' && (loading ? 'Enviando...' : 'Enviar token')}
+            {authMode === 'recover' && (loading ? 'Enviando...' : 'Enviar enlace')}
             {authMode === 'reset' && (loading ? 'Guardando...' : 'Restablecer contraseña')}
           </button>
 
@@ -293,7 +319,7 @@ export default function LoginScreen({ onLogin }) {
 
           {authMode === 'recover' && (
             <button className="link-button" type="button" onClick={() => changeMode('reset')}>
-              Ya tengo un token
+              Ya tengo un enlace o token
             </button>
           )}
 
