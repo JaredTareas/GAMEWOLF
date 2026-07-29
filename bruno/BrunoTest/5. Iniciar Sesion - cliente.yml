@@ -1,7 +1,7 @@
 info:
-  name: 01. Iniciar sesion - administrador
+  name: 05. Iniciar sesion - cliente
   type: http
-  seq: 1
+  seq: 5
 
 http:
   method: POST
@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "email": "admin@gamewolf.test",
+        "email": "cliente@gamewolf.test",
         "password": "GameWolf#2026"
       }
   auth: inherit
@@ -20,17 +20,14 @@ runtime:
     - type: after-response
       code: |-
         if(res.status === 200) {
-          bru.setVar("token_admin", res.body.token);
+          bru.setVar("token_cliente", res.body.token);
         }
     - type: tests
       code: |-
-        test("El login del administrador responde 200", function() {
+        test("El login del cliente responde 200", function() {
           expect(res.status).to.equal(200);
-        });
-
-        test("El login entrega un token Sanctum", function() {
           expect(res.body.token).to.be.a('string');
-          expect(res.body.usuario.rol).to.equal('admin');
+          expect(res.body.usuario.rol).to.equal('cliente');
         });
 
 settings:

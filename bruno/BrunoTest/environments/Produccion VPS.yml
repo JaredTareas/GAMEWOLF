@@ -2,4 +2,10 @@ name: Produccion VPS
 variables:
   - name: base_url
     value: https://gamewolf.shop/api
-    description: ""
+    description: URL base de la API desplegada en el VPS.
+  - name: token_admin
+    value: ""
+    description: Se obtiene automáticamente al ejecutar primero el login de administrador.
+  - name: token_cliente
+    value: ""
+    description: Se obtiene automáticamente al ejecutar el login de cliente.

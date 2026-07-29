@@ -1,0 +1,27 @@
+info:
+  name: 06. Carrito protegido - cliente
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{base_url}}/carrito"
+  auth:
+    type: bearer
+    token: "{{token_cliente}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("El cliente autenticado puede consultar su carrito", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data).to.be.an('object');
+          expect(res.body.data.detalles).to.be.an('array');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
