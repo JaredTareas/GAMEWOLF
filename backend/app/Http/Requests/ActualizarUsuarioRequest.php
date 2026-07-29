@@ -16,14 +16,17 @@ class ActualizarUsuarioRequest extends FormRequest
      */
     public function rules(): array
     {
+        $usuarioObjetivo = $this->route('usuario');
+        $actualizaSuPropioPerfil = $this->user()->id === $usuarioObjetivo->id;
+
         $rules = [
             'nombre' => ['required', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{8,15}$/'],
         ];
 
-        if ($this->user()->rol === 'admin') {
+        if ($this->user()->rol === 'admin' && ! $actualizaSuPropioPerfil) {
             $rules['rol'] = ['required', 'in:admin,empleado,cliente'];
-            $rules['email'] = ['required', 'email', 'unique:users,email,' . $this->route('usuario')->id];
+            $rules['email'] = ['required', 'email', 'unique:users,email,' . $usuarioObjetivo->id];
             $rules['password'] = [
                 'sometimes',
                 'nullable',
