@@ -9,7 +9,7 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 
 | Prioridad | Bloque | Estado | Siguiente resultado verificable |
 | --- | --- | --- | --- |
-| Alta | Formularios y acciones del frontend | 🟡 | Completar validaciones visibles, confirmaciones y estados de carga por acción. |
+| Alta | Acciones y responsividad del frontend | 🟡 | Completar estados de carga por acción y la prueba visual en móvil/tablet. |
 | Alta | API y pruebas Bruno | ✅ | API revisada; colección Bruno ejecutada en producción con autenticación, autorización y errores. |
 | Alta | README y despliegue | 🟡 | Documentar dominio HTTPS, API productiva, Figma y procedimiento VPS. |
 | Media | Evidencia final y responsividad | 🟡 | Revisar GitHub Projects, commits de ambos y probar visualmente en móvil/tablet. |
@@ -27,7 +27,7 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 | Roles | Middleware y autorización backend | ✅ | Rutas con `auth:sanctum` y middleware `rol`; actualización de perfil autorizada por Form Request. | — |
 | Roles | Componentes/rutas protegidas en React | ✅ | Rutas con React Router para cada vista; redirección a la ruta inicial autorizada cuando el rol no tiene acceso. | Al desplegar, confirmar que Nginx redirige rutas SPA a `index.html`. |
 | Roles | CRUD total del administrador | 🟡 | Usuarios, videojuegos y pedidos tienen gestión administrativa. Géneros/categorías existen como relación N:M, pero todavía no tienen API y pantalla propias de CRUD. | Definir si serán un módulo independiente; si lo son, implementar su CRUD o documentar que se administran desde el catálogo de videojuegos. |
-| Seguridad | Variables sensibles, hash y contraseñas | 🟡 | `.env` no está versionado, `backend/.env.example` contiene placeholders y Laravel guarda hashes; autenticación cumple la política de contraseña. | Cerrar las validaciones visibles pendientes de teléfono/contraseña al editar usuarios para que frontend y backend queden plenamente alineados. |
+| Seguridad | Variables sensibles, hash y contraseñas | ✅ | `.env` no está versionado, `backend/.env.example` contiene placeholders, Laravel guarda hashes y las reglas frontend/backend están alineadas. | Verificar que jamás se suban valores reales al hacer el push final. |
 | Backend | API REST, Sanctum, login, registro, logout y recuperación | ✅ | `routes/api.php` define los endpoints; Sanctum entrega/revoca token y existen los flujos de registro y recuperación/restablecimiento. | Ensayar el flujo completo en VPS antes de la demo. |
 | Backend | Recuperación de contraseña por correo | ✅ | Solicita un enlace de uso único con vigencia de 60 minutos; el formulario se abre con correo y token precargados, restablece el hash y revoca tokens previos. | Configurar `FRONTEND_URL=https://gamewolf.shop` en el `.env` del VPS y ensayar con un correo real. |
 | Backend | Form Requests para las validaciones | ✅ | Todas las entradas que crean o modifican datos usan Form Requests; no hay validaciones inline en controladores. | Mantener esta regla en cambios futuros. |
@@ -38,11 +38,11 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 | Frontend | Rutas protegidas según rol | ✅ | React Router redirige vistas no autorizadas y el menú se construye por rol; backend mantiene la protección real de endpoints. | Confirmar el fallback SPA de Nginx en VPS. |
 | Frontend | Loading states visibles | 🟡 | Carga inicial, login y formularios principales muestran espera. | Agregar espera y deshabilitar controles al agregar/editar/quitar carrito y al cambiar estado de pedido. |
 | Frontend | Manejo de errores de red | ✅ | `apiRequest` traduce errores de API/red y los paneles muestran un mensaje. | Verificación final manual en móvil y VPS. |
-| Frontend | Validaciones bajo cada input | 🟡 | Login/registro, videojuegos y perfil validan bajo el campo y en tiempo real. | Completar validación visible de teléfono y contraseña opcional al editar usuarios, y de tipo/tamaño de archivo de videojuego. |
+| Frontend | Validaciones bajo cada input | ✅ | Login/registro/recuperación, usuarios, videojuegos y perfil validan bajo el campo y en tiempo real; imágenes validan tipo y tamaño también en Form Requests. | — |
 | Frontend | Diseño responsivo mobile/desktop | 🟡 | Estilos responsivos existentes. | Probar manualmente en móvil/tablet y corregir desbordamientos. |
 | Frontend | Paginación server-side y filtros API en todos los listados | ✅ | Videojuegos, catálogo cliente, pedidos, usuarios y clientes envían `page`, `per_page`, `search`, `estado` o `rol` a la API y muestran sus metadatos. | — |
 | Frontend | Navbar, perfil, avatar y cerrar sesión | ✅ | Barra interna con usuario, avatar/imagen, perfil y logout. | — |
-| Frontend | Confirmación para acciones destructivas o importantes | 🟡 | Modales para eliminar videojuegos y usuarios; no usa `alert()`/`confirm()` nativos. | Pedir confirmación antes de quitar un artículo, crear un pedido y cambiar estado de pedido (dispara WhatsApp). |
+| Frontend | Confirmación para acciones destructivas o importantes | ✅ | Modales para eliminar usuarios/videojuegos, quitar artículo del carrito, confirmar compra y actualizar estado con WhatsApp; no usa `alert()`/`confirm()` nativos. | — |
 | Comunicación | Correo real al registrar usuario | ⚪ | Se envía correo de bienvenida por Gmail SMTP y queda bitácora en `registros_notificacion`; el docente autorizó esta alternativa a Postfix/SPF/DKIM. | Conservar autorización docente y evidencia del correo recibido para la demo. |
 | Comunicación | WhatsApp por acción real del sistema | ✅ | El cambio de estado de pedido ejecuta Twilio desde el backend y registra el resultado; la prueba Sandbox llegó al teléfono unido. | En demo, usar un número unido al Sandbox o configurar remitente productivo. |
 | Comunicación | SMS | ⚪ | Docente autorizó cubrir comunicación con correo + WhatsApp, sin SMS. | Guardar la autorización del docente como evidencia. |
@@ -57,7 +57,7 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 
 ## Próximo orden de trabajo
 
-1. Completar validaciones de usuarios/archivo de videojuego, confirmaciones de carrito/pedido y loading por acción.
+1. Agregar estados de carga por acción en carrito y al cambiar estado de pedido.
 2. Decidir y resolver el CRUD de géneros/categorías para garantizar el CRUD total del administrador.
 3. Completar README con tecnologías, URL web/API productivas y Figma; guardar evidencia de las excepciones de Gmail y SMS.
 4. Probar en VPS con los tres roles, además de móvil/tablet, y ensayar la demo con correo y WhatsApp.
@@ -71,7 +71,7 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 | --- | :---: | :---: | --- |
 | Base de datos | 10 | ✅ | MySQL, migraciones, seeders, ER y `gamewolf.sql` actualizados. |
 | Backend Laravel | 15 | ✅ | API REST, Sanctum, middleware de rol, Form Requests, Eloquent y Resources implementados. |
-| Frontend React | 15 | 🟡 | Rutas, fetch, filtros/paginación server-side y navbar están listos. Falta cerrar validaciones visibles de usuario/archivo, modales de carrito/pedido, loading por acción y prueba responsive real. |
+| Frontend React | 15 | 🟡 | Rutas, fetch, filtros/paginación server-side, navbar, validaciones y modales están listos. Falta loading por acción y prueba responsive real. |
 | Usuarios y roles | 10 | 🟡 | Tres roles, middleware y rutas React están correctos. En README conviene nombrar explícitamente la cuenta admin como **usuario developer/de evaluación** para evitar ambigüedad de la rúbrica. |
 | Comunicación | 10 | ⚪ | WhatsApp funciona. Correo Gmail y ausencia de SMS son excepciones autorizadas por docente; conservar esa autorización y evidencias de entrega para sostener el puntaje. |
 | Diseño en Figma | 10 | 🟡 | Figma existe y el logo está integrado. Falta enlace público, prototipo navegable y justificación de paleta en README. |

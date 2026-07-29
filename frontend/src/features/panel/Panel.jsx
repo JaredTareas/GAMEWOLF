@@ -412,15 +412,24 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
     if (field === 'descripcion' && !value.trim()) return 'La descripción es obligatoria.'
     if (field === 'precio' && (value === '' || Number(value) < 0)) return 'Ingresa un precio válido (mayor o igual a 0).'
     if (field === 'stock' && (value === '' || Number(value) < 0)) return 'Ingresa un stock válido (mayor o igual a 0).'
+    if (field === 'imagen' && value instanceof File) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(value.type)) {
+        return 'La imagen debe ser JPG, PNG o WEBP.'
+      }
+
+      if (value.size > 2 * 1024 * 1024) {
+        return 'La imagen no debe pesar más de 2 MB.'
+      }
+    }
+
     return ''
   }
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
     // Validar en tiempo real al escribir
-    if (['titulo', 'descripcion', 'precio', 'stock'].includes(field)) {
-      const valToValidate = typeof value === 'string' ? value : String(value)
-      setErrors((prev) => ({ ...prev, [field]: validateField(field, valToValidate) }))
+    if (['titulo', 'descripcion', 'precio', 'stock', 'imagen'].includes(field)) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
     }
   }
 
@@ -434,6 +443,7 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
       descripcion: validateField('descripcion', form.descripcion),
       precio: validateField('precio', String(form.precio)),
       stock: validateField('stock', String(form.stock)),
+      imagen: validateField('imagen', form.imagen),
     }
     
     setErrors(newErrors)
@@ -521,9 +531,11 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
           <span>Imagen</span>
           <input 
             type="file" 
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp"
             onChange={(event) => updateField('imagen', event.target.files[0])} 
           />
+          {errors.imagen && <small style={{ color: '#dc2626', marginTop: '4px' }}>{errors.imagen}</small>}
+          {!errors.imagen && <small style={{ color: '#667085', marginTop: '4px' }}>Formatos permitidos: JPG, PNG o WEBP. Máximo 2 MB.</small>}
           {typeof form.imagen === 'string' && form.imagen && (
             <small style={{ marginTop: '5px', display: 'block', color: '#666' }}>
               Archivo actual guardado: {form.imagen.split('/').pop()}
@@ -598,6 +610,32 @@ function OrdersTable({
   onEstadoChange,
   onPageChange,
 }) {
+  const [pendingStatusChange, setPendingStatusChange] = useState(null)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+  function requestStatusChange(pedido, estado) {
+    if (pedido.estado === estado) return
+
+    setPendingStatusChange({
+      pedidoId: pedido.id,
+      folio: pedido.folio,
+      previousEstado: pedido.estado,
+      estado,
+    })
+  }
+
+  async function confirmStatusChange() {
+    if (!pendingStatusChange) return
+
+    setIsUpdatingStatus(true)
+    try {
+      await onUpdateStatus?.(pendingStatusChange.pedidoId, pendingStatusChange.estado)
+      setPendingStatusChange(null)
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
   return (
     <DataPanel title={title || (compact ? 'Últimos pedidos' : 'Gestión de pedidos')}>
       {!compact && onSearch && (
@@ -642,7 +680,7 @@ function OrdersTable({
                   <select
                     className="status-select"
                     value={pedido.estado}
-                    onChange={(event) => onUpdateStatus(pedido.id, event.target.value)}
+                    onChange={(event) => requestStatusChange(pedido, event.target.value)}
                   >
                     <option value="pendiente">pendiente</option>
                     <option value="pagado">pagado</option>
@@ -657,6 +695,18 @@ function OrdersTable({
         </tbody>
       </table>
       {meta ? <PaginationControls meta={meta} onPageChange={onPageChange} /> : <div className="pagination">Mostrando {pedidos.length} registros</div>}
+
+      {pendingStatusChange && (
+        <ConfirmModal
+          title="Actualizar estado del pedido"
+          message={`¿Cambiar el pedido ${pendingStatusChange.folio} de "${pendingStatusChange.previousEstado}" a "${pendingStatusChange.estado}"? Se enviará una notificación de WhatsApp al cliente.`}
+          confirmLabel="Actualizar y notificar"
+          isDanger={false}
+          onConfirm={confirmStatusChange}
+          onCancel={() => setPendingStatusChange(null)}
+          isProcessing={isUpdatingStatus}
+        />
+      )}
     </DataPanel>
   )
 }
@@ -791,19 +841,20 @@ function UserFormModal({ usuario, onClose, onSubmit }) {
   function validateField(field, value) {
     if (field === 'nombre' && !value.trim()) return 'El nombre es obligatorio.'
     if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Ingresa un correo válido.'
-    if (field === 'password' && !usuario) { // Solo es obligatoria al crear, opcional al editar
-      if (!value) return 'La contraseña es obligatoria.'
-      if (value.length < 8) return 'Mínimo 8 caracteres.'
-      if (!/[A-Z]/.test(value)) return 'Falta al menos una mayúscula.'
-      if (!/[0-9]/.test(value)) return 'Falta al menos un número.'
-      if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) return 'Falta un carácter especial.'
+    if (field === 'telefono' && value && !/^[0-9+\-\s()]{8,15}$/.test(value)) return 'Ingresa un teléfono válido.'
+    if (field === 'password') {
+      if (!value && !usuario) return 'La contraseña es obligatoria.'
+      if (value && value.length < 8) return 'Mínimo 8 caracteres.'
+      if (value && !/[A-Z]/.test(value)) return 'Falta al menos una mayúscula.'
+      if (value && !/[0-9]/.test(value)) return 'Falta al menos un número.'
+      if (value && !/[!@#$%^&*(),.?":{}|<>]/.test(value)) return 'Falta un carácter especial.'
     }
     return ''
   }
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
-    if (['nombre', 'email', 'password'].includes(field)) {
+    if (['nombre', 'email', 'telefono', 'password'].includes(field)) {
       setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
     }
   }
@@ -815,6 +866,7 @@ function UserFormModal({ usuario, onClose, onSubmit }) {
     const newErrors = {
       nombre: validateField('nombre', form.nombre),
       email: validateField('email', form.email),
+      telefono: validateField('telefono', form.telefono),
       password: validateField('password', form.password),
     }
     setErrors(newErrors)
@@ -861,6 +913,7 @@ function UserFormModal({ usuario, onClose, onSubmit }) {
           <label className="field">
             <span>Teléfono</span>
             <input value={form.telefono} onChange={(e) => updateField('telefono', e.target.value)} />
+            {errors.telefono && <small style={{ color: '#dc2626' }}>{errors.telefono}</small>}
           </label>
         </div>
 
@@ -937,6 +990,31 @@ function SettingsPanel() {
 
 function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
   const detalles = carrito?.detalles ?? []
+  const [detalleToRemove, setDetalleToRemove] = useState(null)
+  const [purchaseToConfirm, setPurchaseToConfirm] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  async function confirmRemoveItem() {
+    if (!detalleToRemove) return
+
+    setIsProcessing(true)
+    try {
+      await onRemoveItem(detalleToRemove.id)
+      setDetalleToRemove(null)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  async function confirmPurchase() {
+    setIsProcessing(true)
+    try {
+      await onConfirm()
+      setPurchaseToConfirm(false)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
 
   return (
     <DataPanel title="Carrito de compras">
@@ -975,7 +1053,7 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
                 </td>
                 <td>${detalle.subtotal}</td>
                 <td>
-                  <button className="table-action danger" type="button" onClick={() => onRemoveItem(detalle.id)}>
+                  <button className="table-action danger" type="button" onClick={() => setDetalleToRemove(detalle)}>
                     Quitar
                   </button>
                 </td>
@@ -987,10 +1065,32 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
       <div className="cart-total">
         <span>Total</span>
         <strong>${carrito?.total ?? 0}</strong>
-        <button type="button" onClick={onConfirm} disabled={!detalles.length}>
+        <button type="button" onClick={() => setPurchaseToConfirm(true)} disabled={!detalles.length}>
           Confirmar compra
         </button>
       </div>
+
+      {detalleToRemove && (
+        <ConfirmModal
+          title="Quitar artículo del carrito"
+          message={`¿Quieres quitar "${detalleToRemove.videojuego?.titulo || 'este videojuego'}" de tu carrito?`}
+          onConfirm={confirmRemoveItem}
+          onCancel={() => setDetalleToRemove(null)}
+          isProcessing={isProcessing}
+        />
+      )}
+
+      {purchaseToConfirm && (
+        <ConfirmModal
+          title="Confirmar compra"
+          message={`¿Confirmas la compra por $${carrito?.total ?? 0}? Se registrará tu pedido y se descontará el stock disponible.`}
+          confirmLabel="Sí, confirmar compra"
+          isDanger={false}
+          onConfirm={confirmPurchase}
+          onCancel={() => setPurchaseToConfirm(false)}
+          isProcessing={isProcessing}
+        />
+      )}
     </DataPanel>
   )
 }
@@ -1003,6 +1103,7 @@ function ProfilePanel({ usuario, token }) {
   })
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
+  const [photoError, setPhotoError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [photoSaving, setPhotoSaving] = useState(false)
@@ -1023,15 +1124,16 @@ function ProfilePanel({ usuario, token }) {
     if (!file) return
 
     setApiError('')
+    setPhotoError('')
     setSuccessMsg('')
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setApiError('La foto debe ser JPG, PNG o WEBP.')
+      setPhotoError('La foto debe ser JPG, PNG o WEBP.')
       return
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      setApiError('La foto no debe pesar más de 2 MB.')
+      setPhotoError('La foto no debe pesar más de 2 MB.')
       return
     }
 
@@ -1052,7 +1154,7 @@ function ProfilePanel({ usuario, token }) {
       window.dispatchEvent(new CustomEvent('usuario-actualizado', { detail: updatedUser }))
       setSuccessMsg('Foto de perfil actualizada correctamente.')
     } catch (err) {
-      setApiError(err.message || 'No se pudo actualizar la foto de perfil.')
+      setPhotoError(err.message || 'No se pudo actualizar la foto de perfil.')
     } finally {
       setPhotoSaving(false)
       event.target.value = ''
@@ -1139,9 +1241,13 @@ function ProfilePanel({ usuario, token }) {
         <label className="field">
           <span>Foto de perfil</span>
           <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePhotoChange} disabled={photoSaving} />
-          <small style={{ color: '#667085', marginTop: '4px' }}>
+          {photoError ? (
+            <small style={{ color: '#dc2626', marginTop: '4px' }}>{photoError}</small>
+          ) : (
+            <small style={{ color: '#667085', marginTop: '4px' }}>
             {photoSaving ? 'Subiendo foto...' : 'Formatos permitidos: JPG, PNG o WEBP. Máximo 2 MB.'}
-          </small>
+            </small>
+          )}
         </label>
 
         {apiError && <p className="form-error">{apiError}</p>}
@@ -1171,7 +1277,7 @@ function StatusBadge({ status }) {
   return <span className={`status ${className}`}>{status}</span>
 }
 
-function ConfirmModal({ title, message, onConfirm, onCancel, isProcessing }) {
+function ConfirmModal({ title, message, onConfirm, onCancel, isProcessing, confirmLabel = 'Sí, eliminar', isDanger = true }) {
   return (
     <div className="modal-backdrop" role="presentation" style={{ zIndex: 100 }}>
       <div className="modal-card" style={{ maxWidth: '400px' }}>
@@ -1193,12 +1299,12 @@ function ConfirmModal({ title, message, onConfirm, onCancel, isProcessing }) {
           </button>
           <button 
             className="primary-button small" 
-            style={{ backgroundColor: '#dc2626' }} 
+            style={isDanger ? { backgroundColor: '#dc2626' } : undefined}
             type="button" 
             onClick={onConfirm} 
             disabled={isProcessing}
           >
-            {isProcessing ? 'Procesando...' : 'Sí, eliminar'}
+            {isProcessing ? 'Procesando...' : confirmLabel}
           </button>
         </div>
       </div>
