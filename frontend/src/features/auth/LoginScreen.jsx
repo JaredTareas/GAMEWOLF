@@ -286,7 +286,7 @@ export default function LoginScreen({ onLogin }) {
                 Olvidaste tu contraseña
               </button>
               <button className="link-button" type="button" onClick={() => changeMode('register')} style={{ marginTop: '10px' }}>
-                ¿No tienes cuenta? Regístrate aquí
+                ¿No tienes cuenta como cliente? Regístrate aquí
               </button>
             </>
           )}
