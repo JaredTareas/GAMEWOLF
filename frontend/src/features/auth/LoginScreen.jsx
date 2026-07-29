@@ -84,7 +84,7 @@ export default function LoginScreen({ onLogin }) {
 
       setLoading(true)
       try {
-        await apiRequest('/autenticacion/registro', {
+        const response = await apiRequest('/autenticacion/registro', {
           method: 'POST',
           body: { 
             nombre: formName, 
@@ -94,7 +94,7 @@ export default function LoginScreen({ onLogin }) {
             rol: 'cliente' 
           },
         })
-        setNotice('Cuenta creada con éxito. Ahora puedes iniciar sesión.')
+        setNotice(response.mensaje || 'Cuenta creada con éxito. Ahora puedes iniciar sesión.')
         setAuthMode('login')
         setPassword('')
         setPasswordConfirmation('')

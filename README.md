@@ -140,3 +140,22 @@ El telefono del cliente debe estar guardado en formato E.164, por ejemplo:
 ```
 
 Para WhatsApp en cuenta de prueba, el destinatario debe haber unido su número al sandbox de Twilio. Si faltan credenciales, el teléfono no tiene formato válido o Twilio rechaza el envío, el cambio de estado no se revierte: el intento queda registrado como `pendiente_configuracion` o `fallido` para auditoría.
+
+## Correo de bienvenida por registro
+
+Al registrar una cuenta mediante `POST /api/autenticacion/registro`, o al crearla desde el panel de usuarios, GameWolf envía un correo de bienvenida al email de la cuenta. El correo se crea con el Mailable `BienvenidaUsuario`, usa la vista Blade `resources/views/emails/bienvenida-usuario.blade.php` y deja una bitácora en `registros_notificacion`.
+
+Para Gmail con contraseña de aplicación se requiere SMTP. No se deben subir credenciales reales al repositorio:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_SCHEME=smtps
+MAIL_USERNAME=gamewolf.proyecto@gmail.com
+MAIL_PASSWORD=contraseña_de_aplicacion
+MAIL_FROM_ADDRESS=gamewolf.proyecto@gmail.com
+MAIL_FROM_NAME="GameWolf"
+```
+
+También puede usarse el puerto 587 con `MAIL_SCHEME=smtp`; Laravel negociará STARTTLS cuando el servidor lo ofrezca. Después de cambiar variables de entorno en un servidor, ejecuta `php artisan optimize:clear` y reinicia el proceso de PHP.

@@ -7,6 +7,8 @@ use App\Http\Requests\ActualizarUsuarioRequest;
 use App\Http\Requests\GuardarUsuarioRequest;
 use App\Http\Resources\UsuarioResource;
 use App\Models\User;
+use App\Services\CorreoBienvenidaService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -31,14 +33,27 @@ class UsuarioController extends Controller
     }
 
     // Crear usuario
-    public function store(GuardarUsuarioRequest $request): UsuarioResource
+    public function store(
+        GuardarUsuarioRequest $request,
+        CorreoBienvenidaService $correoBienvenidaService,
+    ): JsonResponse
     {
         $data = $request->validated();
         $data['password'] = Hash::make($data['password']);
 
         $usuario = User::create($data);
+        $correoBienvenida = $correoBienvenidaService->enviar($usuario);
+        $correoEnviado = $correoBienvenida->estado === 'enviado';
 
-        return new UsuarioResource($usuario);
+        return response()->json([
+            'mensaje' => $correoEnviado
+                ? 'Usuario creado y correo de bienvenida enviado.'
+                : 'Usuario creado, pero no se pudo enviar el correo de bienvenida.',
+            'data' => new UsuarioResource($usuario),
+            'correo_bienvenida' => [
+                'estado' => $correoBienvenida->estado,
+            ],
+        ], 201);
     }
 
     public function show(User $usuario): UsuarioResource

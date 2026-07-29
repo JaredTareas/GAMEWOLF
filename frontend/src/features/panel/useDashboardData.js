@@ -147,7 +147,7 @@ export function useDashboardData(token, rol) {
           ? current.usuarios.map((item) => (item.id === usuarioId ? response.data : item))
           : [response.data, ...current.usuarios],
       }))
-      showNotice(usuarioId ? 'Usuario actualizado.' : 'Usuario creado.')
+      showNotice(response.mensaje || (usuarioId ? 'Usuario actualizado.' : 'Usuario creado.'))
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
       throw err

@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\RestablecerContrasenaRequest;
 use App\Http\Requests\Auth\SolicitarRecuperacionRequest;
 use App\Http\Resources\UsuarioResource;
 use App\Models\User;
+use App\Services\CorreoBienvenidaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,18 +19,28 @@ use Illuminate\Support\Str;
 
 class AutenticacionController extends Controller
 {
-    public function registrar(RegistrarUsuarioRequest $request): JsonResponse
+    public function registrar(
+        RegistrarUsuarioRequest $request,
+        CorreoBienvenidaService $correoBienvenidaService,
+    ): JsonResponse
     {
         $user = User::create([
             ...$request->safe()->except('password'),
             'rol' => User::ROL_CLIENTE,
             'password' => Hash::make($request->validated('password')),
         ]);
+        $correoBienvenida = $correoBienvenidaService->enviar($user);
+        $correoEnviado = $correoBienvenida->estado === 'enviado';
 
         return response()->json([
-            'mensaje' => 'Cuenta registrada correctamente.',
+            'mensaje' => $correoEnviado
+                ? 'Cuenta registrada correctamente. Te enviamos un correo de bienvenida.'
+                : 'Cuenta registrada correctamente, pero no se pudo enviar el correo de bienvenida. Intenta iniciar sesión y contacta al administrador si el problema continúa.',
             'usuario' => new UsuarioResource($user),
             'token' => $user->createToken('gamewolf-api')->plainTextToken,
+            'correo_bienvenida' => [
+                'estado' => $correoBienvenida->estado,
+            ],
         ], 201);
     }
 
