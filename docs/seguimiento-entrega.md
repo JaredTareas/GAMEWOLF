@@ -25,19 +25,21 @@ Este archivo se actualiza al terminar una tarea. Cuando se complete una fila par
 | Base de datos | Diagrama ER en README | ✅ | Imagen y diagrama relacional documentados en README. | — |
 | Roles | Tres niveles y usuarios demo | ✅ | Roles `admin`, `empleado`, `cliente`; seeders y credenciales de prueba. | — |
 | Roles | Middleware y autorización backend | ✅ | Rutas con `auth:sanctum` y middleware `rol`; actualización de perfil autorizada por Form Request. | — |
-| Roles | Componentes/rutas protegidas en React | 🟡 | Menú y vistas se muestran según rol. | Añadir/verificar protección de navegación directa por URL mediante rutas reales por rol. |
+| Roles | Componentes/rutas protegidas en React | ✅ | Rutas con React Router para cada vista; redirección a la ruta inicial autorizada cuando el rol no tiene acceso. | Al desplegar, confirmar que Nginx redirige rutas SPA a `index.html`. |
 | Seguridad | Contraseña segura, hash y `.env` | ✅ | Reglas frontend/backend, hash de Laravel, `.env` ignorado y `.env.example`. | Verificar que jamás se suban valores reales al hacer el push final. |
 | Backend | API REST, Sanctum, login, registro, logout y recuperación | ✅ | Rutas API y controladores implementados. | Probar flujo completo en el VPS antes de la demo. |
 | Backend | Form Requests para las validaciones | ✅ | Incluye `ActualizarFotoPerfilRequest` y `ActualizarUsuarioRequest`; no quedan validaciones inline en controladores. | Mantener esta regla en cambios futuros. |
 | Backend | Errores JSON con HTTP correcto | 🟡 | Validaciones y autorización devuelven 422/403; autenticación usa API JSON. | Recorrer endpoints y documentar/probar 401, 403, 404 y 500 controlado. |
 | Backend | Relaciones Eloquent y API Resources | ✅ | Modelos relacionados y Resources usados en API. | — |
 | Pruebas | Pruebas automatizadas backend | 🟡 | Pruebas de seeders, correo, perfil y foto; suite local correcta. | Agregar cobertura de autorización/pedidos y errores críticos. |
-| Frontend | Consumo de API, loading y error de red | ✅ | Cliente `fetch` centralizado y estados visibles en paneles. | Verificación final manual en móvil y VPS. |
-| Frontend | Validaciones bajo cada input | 🟡 | Formularios principales y perfil muestran errores bajo campos. | Revisar todos los modales/formularios y corregir cualquier mensaje genérico. |
+| Frontend | Consumo de API mediante Fetch | ✅ | Cliente `fetch` centralizado en `services/api.js`. | — |
+| Frontend | Loading states visibles | 🟡 | Carga inicial y formularios principales muestran estados de espera. | Agregar estado por acción en carrito y al cambiar estado de pedido. |
+| Frontend | Manejo de errores de red | ✅ | `apiRequest` traduce errores de API/red y los paneles muestran un mensaje. | Verificación final manual en móvil y VPS. |
+| Frontend | Validaciones bajo cada input | 🟡 | Login/registro, videojuegos y perfil validan bajo el campo y en tiempo real. | Completar validación visible de teléfono y contraseña al editar usuarios, y de archivos de videojuego. |
 | Frontend | Diseño responsivo mobile/desktop | 🟡 | Estilos responsivos existentes. | Probar manualmente en móvil/tablet y corregir desbordamientos. |
-| Frontend | Paginación server-side y filtros API en todos los listados | 🟡 | API acepta paginación/filtros; videojuegos ya lo usa. | Integrar controles visibles para usuarios, pedidos y los listados restantes. |
+| Frontend | Paginación server-side y filtros API en todos los listados | ✅ | Videojuegos, catálogo cliente, pedidos, usuarios y clientes envían `page`, `per_page`, `search`, `estado` o `rol` a la API y muestran sus metadatos. | — |
 | Frontend | Navbar, perfil, avatar y cerrar sesión | ✅ | Barra interna con usuario, avatar/imagen, perfil y logout. | — |
-| Frontend | Confirmación para acciones destructivas | ✅ | Modales de confirmación; sin `alert()`/`confirm()` nativos. | — |
+| Frontend | Confirmación para acciones destructivas o importantes | 🟡 | Modales para eliminar videojuegos y usuarios; no usa `alert()`/`confirm()` nativos. | Pedir confirmación antes de crear un pedido y antes de cambiar estado de pedido (dispara WhatsApp). |
 | Comunicación | Correo real al registrar usuario | ✅ | Gmail SMTP autorizado por docente; correo de bienvenida y registro de notificación implementados. | Conservar captura/correo recibido como evidencia de demo. |
 | Comunicación | WhatsApp por acción real del sistema | ✅ | Cambio de estado de pedido dispara WhatsApp vía Twilio; prueba Sandbox realizada. | En demo, usar un número unido al Sandbox o configurar remitente productivo. |
 | Comunicación | SMS | ⚪ | Docente autorizó cubrir comunicación con correo + WhatsApp, sin SMS. | Guardar la autorización del docente como evidencia. |

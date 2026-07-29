@@ -1,10 +1,46 @@
 import { useEffect, useState } from 'react'
 import { apiRequest } from '../../services/api'
 
+function createQuery(params) {
+  const query = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== '' && value !== null && value !== undefined) {
+      query.set(key, String(value))
+    }
+  })
+
+  return query.toString()
+}
+
+const emptyListResponse = { data: [], meta: null }
+
 export function useDashboardData(token, rol) {
-  const [state, setState] = useState({ videojuegos: [], metaVideojuegos: null, pedidos: [], usuarios: [], reporte: null, loading: true, error: '', notice: '' })
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [state, setState] = useState({
+    videojuegos: [],
+    metaVideojuegos: null,
+    pedidos: [],
+    metaPedidos: null,
+    usuarios: [],
+    metaUsuarios: null,
+    clientes: [],
+    metaClientes: null,
+    reporte: null,
+    loading: true,
+    error: '',
+    notice: '',
+  })
+  const [videojuegosSearch, setVideojuegosSearch] = useState('')
+  const [videojuegosPage, setVideojuegosPage] = useState(1)
+  const [pedidosSearch, setPedidosSearch] = useState('')
+  const [pedidosEstado, setPedidosEstado] = useState('')
+  const [pedidosPage, setPedidosPage] = useState(1)
+  const [usuariosSearch, setUsuariosSearch] = useState('')
+  const [usuariosRol, setUsuariosRol] = useState('')
+  const [usuariosPage, setUsuariosPage] = useState(1)
+  const [clientesSearch, setClientesSearch] = useState('')
+  const [clientesPage, setClientesPage] = useState(1)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   function showNotice(message) {
     setState((current) => ({ ...current, notice: message }))
@@ -14,32 +50,61 @@ export function useDashboardData(token, rol) {
     }, 2600)
   }
 
+  function reloadData() {
+    setRefreshKey((current) => current + 1)
+  }
+
   useEffect(() => {
     let active = true
 
     async function load() {
-      // Activamos el loading al cambiar de página o buscar
       setState((current) => ({ ...current, loading: true, error: '' }))
-      
-      try {
-        // Armamos los parámetros para la URL
-        const queryParams = new URLSearchParams()
-        if (search) queryParams.append('search', search)
-        queryParams.append('page', page)
 
-        const [videojuegosRes, pedidosRes, usuariosRes, reporteRes] = await Promise.all([
-          apiRequest(`/videojuegos?${queryParams.toString()}`), // URL con filtros
-          apiRequest('/pedidos', { token }),
-          ['admin', 'empleado'].includes(rol) ? apiRequest('/usuarios', { token }) : Promise.resolve({ data: [] }),
-          ['admin', 'empleado'].includes(rol) ? apiRequest('/reportes/resumen', { token }) : Promise.resolve({ data: null }),
+      const videojuegosQuery = createQuery({
+        search: videojuegosSearch,
+        page: videojuegosPage,
+        per_page: 10,
+      })
+      const pedidosQuery = createQuery({
+        search: pedidosSearch,
+        estado: pedidosEstado,
+        page: pedidosPage,
+        per_page: 10,
+      })
+      const usuariosQuery = createQuery({
+        search: usuariosSearch,
+        rol: usuariosRol,
+        page: usuariosPage,
+        per_page: 10,
+      })
+      const clientesQuery = createQuery({
+        search: clientesSearch,
+        rol: 'cliente',
+        page: clientesPage,
+        per_page: 10,
+      })
+      const puedeConsultarUsuarios = ['admin', 'empleado'].includes(rol)
+
+      try {
+        const [videojuegosRes, pedidosRes, usuariosRes, clientesRes, reporteRes] = await Promise.all([
+          apiRequest(`/videojuegos?${videojuegosQuery}`),
+          apiRequest(`/pedidos?${pedidosQuery}`, { token }),
+          rol === 'admin' ? apiRequest(`/usuarios?${usuariosQuery}`, { token }) : Promise.resolve(emptyListResponse),
+          puedeConsultarUsuarios ? apiRequest(`/usuarios?${clientesQuery}`, { token }) : Promise.resolve(emptyListResponse),
+          puedeConsultarUsuarios ? apiRequest('/reportes/resumen', { token }) : Promise.resolve({ data: null }),
         ])
 
         if (!active) return
+
         setState({
           videojuegos: videojuegosRes.data ?? [],
-          metaVideojuegos: videojuegosRes.meta ?? null, // 4. Guardamos la metadata
+          metaVideojuegos: videojuegosRes.meta ?? null,
           pedidos: pedidosRes.data ?? [],
+          metaPedidos: pedidosRes.meta ?? null,
           usuarios: usuariosRes.data ?? [],
+          metaUsuarios: usuariosRes.meta ?? null,
+          clientes: clientesRes.data ?? [],
+          metaClientes: clientesRes.meta ?? null,
           reporte: reporteRes.data ?? null,
           loading: false,
           error: '',
@@ -50,12 +115,28 @@ export function useDashboardData(token, rol) {
         setState((current) => ({ ...current, loading: false, error: err.message }))
       }
     }
-    const delay = setTimeout(() => { load() }, 300)
+
+    const delay = window.setTimeout(load, 300)
+
     return () => {
       active = false
-      clearTimeout(delay)
+      window.clearTimeout(delay)
     }
-  }, [token, rol, search, page])
+  }, [
+    token,
+    rol,
+    videojuegosSearch,
+    videojuegosPage,
+    pedidosSearch,
+    pedidosEstado,
+    pedidosPage,
+    usuariosSearch,
+    usuariosRol,
+    usuariosPage,
+    clientesSearch,
+    clientesPage,
+    refreshKey,
+  ])
 
   async function updateOrderStatus(pedidoId, estado) {
     setState((current) => ({ ...current, error: '' }))
@@ -67,14 +148,11 @@ export function useDashboardData(token, rol) {
         body: { estado },
       })
 
-      setState((current) => ({
-        ...current,
-        pedidos: current.pedidos.map((pedido) => (pedido.id === pedidoId ? response.data : pedido)),
-      }))
       const resumen = Object.entries(response.notificaciones ?? {})
         .map(([canal, notificacion]) => `${canal.toUpperCase()}: ${notificacion.estado}`)
         .join(' | ')
       showNotice(`${response.mensaje || 'Estado del pedido actualizado.'}${resumen ? ` ${resumen}` : ''}`)
+      reloadData()
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
     }
@@ -87,26 +165,19 @@ export function useDashboardData(token, rol) {
       let method = videojuegoId ? 'PUT' : 'POST'
       let body = payload
 
-      // PHP no lee archivos físicos en peticiones PUT directas.
-      // Convertimos a POST y agregamos _method = PUT al FormData.
       if (payload instanceof FormData && videojuegoId) {
         payload.append('_method', 'PUT')
         method = 'POST'
       }
 
-      const response = await apiRequest(videojuegoId ? `/videojuegos/${videojuegoId}` : '/videojuegos', {
+      await apiRequest(videojuegoId ? `/videojuegos/${videojuegoId}` : '/videojuegos', {
         method,
         token,
         body,
       })
 
-      setState((current) => ({
-        ...current,
-        videojuegos: videojuegoId
-          ? current.videojuegos.map((item) => (item.id === videojuegoId ? response.data : item))
-          : [response.data, ...current.videojuegos],
-      }))
       showNotice(videojuegoId ? 'Videojuego actualizado.' : 'Videojuego agregado.')
+      reloadData()
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
       throw err
@@ -122,18 +193,16 @@ export function useDashboardData(token, rol) {
         token,
       })
 
-      setState((current) => ({
-        ...current,
-        videojuegos: current.videojuegos.filter((item) => item.id !== videojuegoId),
-      }))
       showNotice(response.mensaje || 'Videojuego eliminado.')
+      reloadData()
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
     }
   }
-  
+
   async function saveUser(payload, usuarioId = null) {
     setState((current) => ({ ...current, error: '' }))
+
     try {
       const method = usuarioId ? 'PUT' : 'POST'
       const response = await apiRequest(usuarioId ? `/usuarios/${usuarioId}` : '/usuarios', {
@@ -141,13 +210,9 @@ export function useDashboardData(token, rol) {
         token,
         body: payload,
       })
-      setState((current) => ({
-        ...current,
-        usuarios: usuarioId
-          ? current.usuarios.map((item) => (item.id === usuarioId ? response.data : item))
-          : [response.data, ...current.usuarios],
-      }))
+
       showNotice(response.mensaje || (usuarioId ? 'Usuario actualizado.' : 'Usuario creado.'))
+      reloadData()
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
       throw err
@@ -156,17 +221,42 @@ export function useDashboardData(token, rol) {
 
   async function deleteUser(usuarioId) {
     setState((current) => ({ ...current, error: '' }))
+
     try {
       const response = await apiRequest(`/usuarios/${usuarioId}`, { method: 'DELETE', token })
-      setState((current) => ({
-        ...current,
-        usuarios: current.usuarios.filter((item) => item.id !== usuarioId),
-      }))
       showNotice(response.mensaje || 'Usuario eliminado.')
+      reloadData()
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
     }
   }
-  
-  return { ...state, saveGame, deleteGame, updateOrderStatus, search, setSearch, page, setPage, saveUser, deleteUser }
+
+  return {
+    ...state,
+    saveGame,
+    deleteGame,
+    updateOrderStatus,
+    saveUser,
+    deleteUser,
+    videojuegosSearch,
+    setVideojuegosSearch,
+    videojuegosPage,
+    setVideojuegosPage,
+    pedidosSearch,
+    setPedidosSearch,
+    pedidosEstado,
+    setPedidosEstado,
+    pedidosPage,
+    setPedidosPage,
+    usuariosSearch,
+    setUsuariosSearch,
+    usuariosRol,
+    setUsuariosRol,
+    usuariosPage,
+    setUsuariosPage,
+    clientesSearch,
+    setClientesSearch,
+    clientesPage,
+    setClientesPage,
+  }
 }

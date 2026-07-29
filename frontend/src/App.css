@@ -912,6 +912,24 @@
   justify-content: flex-end;
 }
 
+.panel-actions.list-filters,
+.panel-actions.catalog-actions {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.panel-actions.list-filters input,
+.panel-actions.catalog-actions input {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.panel-actions.list-filters select {
+  min-width: 180px;
+}
+
 .filters {
   display: grid;
   grid-template-columns: 1fr 180px 180px;
@@ -920,13 +938,15 @@
 
 .filters input,
 .filters select,
-.panel-actions input {
+.panel-actions input,
+.panel-actions select {
   border-color: #cad8ed !important;
   background: linear-gradient(180deg, #fff, #f8fbff) !important;
   box-shadow: 0 8px 18px rgba(16, 24, 40, 0.04);
 }
 
-.panel-actions input:focus {
+.panel-actions input:focus,
+.panel-actions select:focus {
   outline: none;
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
@@ -1003,6 +1023,22 @@ tbody tr:last-child td {
 .notice,
 .empty-state {
   color: #667085;
+}
+
+.pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.pagination-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .notice {
@@ -1533,6 +1569,16 @@ tbody tr:last-child td {
   .panel-actions input,
   .cart-total button,
   .modal-actions button {
+    width: 100%;
+  }
+
+  .pagination,
+  .pagination-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination-controls button {
     width: 100%;
   }
 

@@ -22,9 +22,13 @@ export default function Content({ usuario, token, activeView }) {
 function AdminEmployeeView({ usuario, token, activeView, title }) {
   const {
     videojuegos,
-    metaVideojuegos, 
+    metaVideojuegos,
     pedidos,
+    metaPedidos,
     usuarios,
+    metaUsuarios,
+    clientes,
+    metaClientes,
     reporte,
     loading,
     error,
@@ -32,12 +36,28 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
     saveGame,
     deleteGame,
     updateOrderStatus,
-    search, 
-    setSearch, 
-    page, 
-    setPage,
-    saveUser,   
-    deleteUser  
+    videojuegosSearch,
+    setVideojuegosSearch,
+    videojuegosPage,
+    setVideojuegosPage,
+    pedidosSearch,
+    setPedidosSearch,
+    pedidosEstado,
+    setPedidosEstado,
+    pedidosPage,
+    setPedidosPage,
+    usuariosSearch,
+    setUsuariosSearch,
+    usuariosRol,
+    setUsuariosRol,
+    usuariosPage,
+    setUsuariosPage,
+    clientesSearch,
+    setClientesSearch,
+    clientesPage,
+    setClientesPage,
+    saveUser,
+    deleteUser,
   } = useDashboardData(token, usuario.rol)
 
   return (
@@ -51,9 +71,9 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
       {activeView === 'Inicio' && (
         <>
           <div className="metrics-grid">
-            <Metric label="Videojuegos disponibles" value={videojuegos.length} tone="blue" />
-            <Metric label="Pedidos registrados" value={pedidos.length} tone="violet" />
-            <Metric label="Usuarios registrados" value={usuarios.length || '-'} tone="green" />
+            <Metric label="Videojuegos disponibles" value={metaVideojuegos?.total ?? videojuegos.length} tone="blue" />
+            <Metric label="Pedidos registrados" value={metaPedidos?.total ?? pedidos.length} tone="violet" />
+            <Metric label="Usuarios registrados" value={metaUsuarios?.total ?? '-'} tone="green" />
           </div>
           <OrdersTable pedidos={pedidos.slice(0, 5)} compact canManage onUpdateStatus={updateOrderStatus} />
         </>
@@ -63,25 +83,52 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
         <GamesTable
           videojuegos={videojuegos}
           meta={metaVideojuegos}
-          search={search}
-          onSearch={(val) => { setSearch(val); setPage(1); }} // Regresa a pag 1 al buscar
-          onPageChange={(newPage) => setPage(newPage)}
+          search={videojuegosSearch}
+          onSearch={(value) => { setVideojuegosSearch(value); setVideojuegosPage(1) }}
+          onPageChange={setVideojuegosPage}
           canManage
           onSave={saveGame}
           onDelete={deleteGame}
           canDelete={usuario.rol === 'admin'}
         />
       )}
-      {activeView === 'Pedidos' && <OrdersTable pedidos={pedidos} canManage onUpdateStatus={updateOrderStatus} />}
-      {activeView === 'Clientes' && <CustomersTable usuarios={usuarios.filter((item) => item.rol === 'cliente')} />}
-      
-   
+      {activeView === 'Pedidos' && (
+        <OrdersTable
+          pedidos={pedidos}
+          meta={metaPedidos}
+          search={pedidosSearch}
+          estado={pedidosEstado}
+          onSearch={(value) => { setPedidosSearch(value); setPedidosPage(1) }}
+          onEstadoChange={(value) => { setPedidosEstado(value); setPedidosPage(1) }}
+          onPageChange={setPedidosPage}
+          canManage
+          onUpdateStatus={updateOrderStatus}
+        />
+      )}
+      {activeView === 'Clientes' && (
+        <CustomersTable
+          title="Clientes registrados"
+          usuarios={clientes}
+          meta={metaClientes}
+          search={clientesSearch}
+          onSearch={(value) => { setClientesSearch(value); setClientesPage(1) }}
+          onPageChange={setClientesPage}
+        />
+      )}
+
       {activeView === 'Usuarios' && (
-        <CustomersTable 
-          usuarios={usuarios} 
-          canManage={usuario.rol === 'admin'} 
-          onSave={saveUser} 
-          onDelete={deleteUser} 
+        <CustomersTable
+          usuarios={usuarios}
+          meta={metaUsuarios}
+          search={usuariosSearch}
+          rol={usuariosRol}
+          showRoleFilter
+          onSearch={(value) => { setUsuariosSearch(value); setUsuariosPage(1) }}
+          onRolChange={(value) => { setUsuariosRol(value); setUsuariosPage(1) }}
+          onPageChange={setUsuariosPage}
+          canManage={usuario.rol === 'admin'}
+          onSave={saveUser}
+          onDelete={deleteUser}
         />
       )}
       
@@ -97,7 +144,30 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
 }
 
 function ClientView({ activeView, title, usuario, token }) {
-  const { videojuegos, pedidos, carrito, loading, error, notice, addToCart, updateCartItem, removeCartItem, createOrder } = useClientData(token)
+  const {
+    videojuegos,
+    metaVideojuegos,
+    pedidos,
+    metaPedidos,
+    carrito,
+    loading,
+    error,
+    notice,
+    addToCart,
+    updateCartItem,
+    removeCartItem,
+    createOrder,
+    catalogoSearch,
+    setCatalogoSearch,
+    catalogoPage,
+    setCatalogoPage,
+    pedidosSearch,
+    setPedidosSearch,
+    pedidosEstado,
+    setPedidosEstado,
+    pedidosPage,
+    setPedidosPage,
+  } = useClientData(token)
 
   return (
     <section className="content">
@@ -108,6 +178,15 @@ function ClientView({ activeView, title, usuario, token }) {
       {loading && <p className="loading-text">Cargando informacion...</p>}
 
       {activeView === 'Catalogo' && (
+        <DataPanel title="Catálogo de videojuegos">
+          <div className="panel-actions catalog-actions">
+            <input
+              type="search"
+              placeholder="Buscar videojuego..."
+              value={catalogoSearch}
+              onChange={(event) => { setCatalogoSearch(event.target.value); setCatalogoPage(1) }}
+            />
+          </div>
         <div className="catalog-grid">
           {videojuegos.map((videojuego) => (
             <article className="game-card" key={videojuego.id}>
@@ -124,6 +203,8 @@ function ClientView({ activeView, title, usuario, token }) {
             </article>
           ))}
         </div>
+          <PaginationControls meta={metaVideojuegos} onPageChange={setCatalogoPage} />
+        </DataPanel>
       )}
 
       {activeView === 'Carrito' && (
@@ -134,7 +215,18 @@ function ClientView({ activeView, title, usuario, token }) {
           onRemoveItem={removeCartItem}
         />
       )}
-      {activeView === 'Mis pedidos' && <OrdersTable pedidos={pedidos} compact />}      
+      {activeView === 'Mis pedidos' && (
+        <OrdersTable
+          title="Mis pedidos"
+          pedidos={pedidos}
+          meta={metaPedidos}
+          search={pedidosSearch}
+          estado={pedidosEstado}
+          onSearch={(value) => { setPedidosSearch(value); setPedidosPage(1) }}
+          onEstadoChange={(value) => { setPedidosEstado(value); setPedidosPage(1) }}
+          onPageChange={setPedidosPage}
+        />
+      )}
       {activeView === 'Perfil' && <ProfilePanel usuario={usuario} token={token} />}
     </section>
   )
@@ -462,9 +554,70 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
   )
 }
 
-function OrdersTable({ pedidos = [], compact = false, canManage = false, onUpdateStatus }) {
+function PaginationControls({ meta, onPageChange }) {
+  if (!meta) return null
+
   return (
-    <DataPanel title={compact ? 'Últimos pedidos' : 'Gestión de pedidos'}>
+    <div className="pagination" aria-label="Paginación">
+      <span>Mostrando {meta.from ?? 0}-{meta.to ?? 0} de {meta.total ?? 0} registros</span>
+      {meta.last_page > 1 && (
+        <div className="pagination-controls">
+          <button
+            className="primary-button small"
+            type="button"
+            disabled={meta.current_page === 1}
+            onClick={() => onPageChange?.(meta.current_page - 1)}
+          >
+            Anterior
+          </button>
+          <span>Página {meta.current_page} de {meta.last_page}</span>
+          <button
+            className="primary-button small"
+            type="button"
+            disabled={meta.current_page === meta.last_page}
+            onClick={() => onPageChange?.(meta.current_page + 1)}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OrdersTable({
+  pedidos = [],
+  meta = null,
+  compact = false,
+  title,
+  canManage = false,
+  onUpdateStatus,
+  search = '',
+  estado = '',
+  onSearch,
+  onEstadoChange,
+  onPageChange,
+}) {
+  return (
+    <DataPanel title={title || (compact ? 'Últimos pedidos' : 'Gestión de pedidos')}>
+      {!compact && onSearch && (
+        <div className="panel-actions list-filters">
+          <input
+            type="search"
+            placeholder="Buscar por folio o cliente..."
+            value={search}
+            onChange={(event) => onSearch(event.target.value)}
+          />
+          <select value={estado} onChange={(event) => onEstadoChange?.(event.target.value)}>
+            <option value="">Todos los estados</option>
+            <option value="pendiente">pendiente</option>
+            <option value="pagado">pagado</option>
+            <option value="enviado">enviado</option>
+            <option value="entregado">entregado</option>
+            <option value="cancelado">cancelado</option>
+          </select>
+        </div>
+      )}
       <table>
         <thead>
           <tr>
@@ -503,12 +656,25 @@ function OrdersTable({ pedidos = [], compact = false, canManage = false, onUpdat
           ))}
         </tbody>
       </table>
-      <div className="pagination">Mostrando {pedidos.length} registros</div>
+      {meta ? <PaginationControls meta={meta} onPageChange={onPageChange} /> : <div className="pagination">Mostrando {pedidos.length} registros</div>}
     </DataPanel>
   )
 }
 
-function CustomersTable({ usuarios = [], canManage = false, onSave, onDelete }) {
+function CustomersTable({
+  title = 'Usuarios registrados',
+  usuarios = [],
+  meta = null,
+  canManage = false,
+  onSave,
+  onDelete,
+  search = '',
+  rol = '',
+  showRoleFilter = false,
+  onSearch,
+  onRolChange,
+  onPageChange,
+}) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [userToDelete, setUserToDelete] = useState(null)
@@ -526,14 +692,30 @@ function CustomersTable({ usuarios = [], canManage = false, onSave, onDelete }) 
   }
 
   return (
-    <DataPanel title="Usuarios registrados">
-      {canManage && (
-        <div className="panel-actions" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+    <DataPanel title={title}>
+      <div className="panel-actions list-filters">
+        {onSearch && (
+          <input
+            type="search"
+            placeholder={title === 'Clientes registrados' ? 'Buscar cliente...' : 'Buscar usuario...'}
+            value={search}
+            onChange={(event) => onSearch(event.target.value)}
+          />
+        )}
+        {showRoleFilter && (
+          <select value={rol} onChange={(event) => onRolChange?.(event.target.value)}>
+            <option value="">Todos los roles</option>
+            <option value="admin">Administrador</option>
+            <option value="empleado">Empleado</option>
+            <option value="cliente">Cliente</option>
+          </select>
+        )}
+        {canManage && (
           <button className="primary-button small" type="button" onClick={openCreateModal}>
             Agregar usuario
           </button>
-        </div>
-      )}
+        )}
+      </div>
       <table>
         <thead>
           <tr>
@@ -567,6 +749,8 @@ function CustomersTable({ usuarios = [], canManage = false, onSave, onDelete }) 
           ))}
         </tbody>
       </table>
+
+      {meta && <PaginationControls meta={meta} onPageChange={onPageChange} />}
 
       {modalOpen && (
         <UserFormModal

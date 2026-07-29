@@ -27,6 +27,17 @@ class PedidoController extends Controller
                 $query->where('usuario_id', $request->user()->id);
             })
             ->when($request->filled('estado'), fn ($query) => $query->where('estado', $request->string('estado')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search');
+
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('folio', 'like', "%{$search}%")
+                        ->orWhereHas('usuario', function ($usuarios) use ($search) {
+                            $usuarios->where('nombre', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
             ->paginate($request->integer('per_page', 10));
 

@@ -1,13 +1,33 @@
 import { useEffect, useState } from 'react'
 import { apiRequest } from '../../services/api'
 
+function createQuery(params) {
+  const query = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== '' && value !== null && value !== undefined) {
+      query.set(key, String(value))
+    }
+  })
+
+  return query.toString()
+}
+
 export function useClientData(token) {
   const [videojuegos, setVideojuegos] = useState([])
+  const [metaVideojuegos, setMetaVideojuegos] = useState(null)
   const [pedidos, setPedidos] = useState([])
+  const [metaPedidos, setMetaPedidos] = useState(null)
   const [carrito, setCarrito] = useState(null)
+  const [catalogoSearch, setCatalogoSearch] = useState('')
+  const [catalogoPage, setCatalogoPage] = useState(1)
+  const [pedidosSearch, setPedidosSearch] = useState('')
+  const [pedidosEstado, setPedidosEstado] = useState('')
+  const [pedidosPage, setPedidosPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   function showNotice(message) {
     setNotice(message)
@@ -15,29 +35,57 @@ export function useClientData(token) {
     showNotice.timeoutId = window.setTimeout(() => setNotice(''), 2600)
   }
 
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      const [videojuegosRes, pedidosRes, carritoRes] = await Promise.all([
-        apiRequest('/videojuegos'),
-        apiRequest('/pedidos', { token }),
-        apiRequest('/carrito', { token }),
-      ])
-
-      setVideojuegos(videojuegosRes.data ?? [])
-      setPedidos(pedidosRes.data ?? [])
-      setCarrito(carritoRes.data ?? carritoRes)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  function reloadData() {
+    setRefreshKey((current) => current + 1)
   }
 
   useEffect(() => {
-    load()
-  }, [token])
+    let active = true
+
+    async function load() {
+      setLoading(true)
+      setError('')
+
+      const videojuegosQuery = createQuery({
+        search: catalogoSearch,
+        page: catalogoPage,
+        per_page: 8,
+      })
+      const pedidosQuery = createQuery({
+        search: pedidosSearch,
+        estado: pedidosEstado,
+        page: pedidosPage,
+        per_page: 10,
+      })
+
+      try {
+        const [videojuegosRes, pedidosRes, carritoRes] = await Promise.all([
+          apiRequest(`/videojuegos?${videojuegosQuery}`),
+          apiRequest(`/pedidos?${pedidosQuery}`, { token }),
+          apiRequest('/carrito', { token }),
+        ])
+
+        if (!active) return
+
+        setVideojuegos(videojuegosRes.data ?? [])
+        setMetaVideojuegos(videojuegosRes.meta ?? null)
+        setPedidos(pedidosRes.data ?? [])
+        setMetaPedidos(pedidosRes.meta ?? null)
+        setCarrito(carritoRes.data ?? carritoRes)
+      } catch (err) {
+        if (active) setError(err.message)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    const delay = window.setTimeout(load, 300)
+
+    return () => {
+      active = false
+      window.clearTimeout(delay)
+    }
+  }, [token, catalogoSearch, catalogoPage, pedidosSearch, pedidosEstado, pedidosPage, refreshKey])
 
   async function addToCart(videojuegoId) {
     setError('')
@@ -90,12 +138,35 @@ export function useClientData(token) {
     setError('')
     try {
       await apiRequest('/pedidos', { method: 'POST', token, body: {} })
-      await load()
       showNotice('Compra confirmada correctamente.')
+      reloadData()
     } catch (err) {
       setError(err.message)
     }
   }
 
-  return { videojuegos, pedidos, carrito, loading, error, notice, addToCart, updateCartItem, removeCartItem, createOrder }
+  return {
+    videojuegos,
+    metaVideojuegos,
+    pedidos,
+    metaPedidos,
+    carrito,
+    loading,
+    error,
+    notice,
+    addToCart,
+    updateCartItem,
+    removeCartItem,
+    createOrder,
+    catalogoSearch,
+    setCatalogoSearch,
+    catalogoPage,
+    setCatalogoPage,
+    pedidosSearch,
+    setPedidosSearch,
+    pedidosEstado,
+    setPedidosEstado,
+    pedidosPage,
+    setPedidosPage,
+  }
 }
