@@ -71,7 +71,10 @@ export function useDashboardData(token, rol) {
         ...current,
         pedidos: current.pedidos.map((pedido) => (pedido.id === pedidoId ? response.data : pedido)),
       }))
-      showNotice('Estado del pedido actualizado.')
+      const resumen = Object.entries(response.notificaciones ?? {})
+        .map(([canal, notificacion]) => `${canal.toUpperCase()}: ${notificacion.estado}`)
+        .join(' | ')
+      showNotice(`${response.mensaje || 'Estado del pedido actualizado.'}${resumen ? ` ${resumen}` : ''}`)
     } catch (err) {
       setState((current) => ({ ...current, error: err.message }))
     }

@@ -113,30 +113,30 @@ GameWolf#2026
 - `GET /api/usuarios`
 - `GET /api/usuarios/{usuario}`
 
-## Notificacion por WhatsApp
+## Notificaciones por WhatsApp con Twilio
 
-La notificacion por WhatsApp se dispara cuando un administrador o empleado cambia el estado de un pedido desde el modulo de pedidos.
+La notificación de WhatsApp se dispara automáticamente cuando un administrador o empleado cambia el estado de un pedido desde el módulo de pedidos. No se envía si se intenta guardar el mismo estado que ya tenía el pedido.
 
 Flujo:
 
 1. El cliente realiza un pedido.
 2. El administrador o empleado actualiza el estado del pedido.
 3. El endpoint `PATCH /api/pedidos/{pedido}/estado` guarda el nuevo estado.
-4. El backend manda un mensaje de WhatsApp al telefono del cliente usando Twilio.
-5. El intento de envio queda guardado en la tabla `registros_notificacion`.
+4. El backend manda un mensaje de WhatsApp al teléfono del cliente usando Twilio.
+5. Cada intento queda guardado en la tabla `registros_notificacion`, con su estado, destinatario y respuesta del proveedor (incluido el SID de Twilio cuando fue aceptado).
 
 Variables necesarias en `backend/.env`:
 
 ```env
 TWILIO_SID=tu_account_sid
-TWILIO_TOKEN=tu_auth_token
+TWILIO_AUTH_TOKEN=tu_auth_token
 TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```
 
-El telefono del cliente debe estar guardado con lada, por ejemplo:
+El telefono del cliente debe estar guardado en formato E.164, por ejemplo:
 
 ```text
 +5215550001001
 ```
 
-Si faltan las credenciales de Twilio o el cliente no tiene telefono, el sistema no se rompe; solo guarda el registro de notificacion como pendiente o fallido.
+Para WhatsApp en cuenta de prueba, el destinatario debe haber unido su número al sandbox de Twilio. Si faltan credenciales, el teléfono no tiene formato válido o Twilio rechaza el envío, el cambio de estado no se revierte: el intento queda registrado como `pendiente_configuracion` o `fallido` para auditoría.

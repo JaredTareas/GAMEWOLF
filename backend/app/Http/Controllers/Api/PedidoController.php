@@ -89,7 +89,7 @@ class PedidoController extends Controller
             $pedido->update(['total' => $total]);
             Carrito::where('usuario_id', $user->id)->where('estado', 'activo')->update(['estado' => 'convertido']);
 
-            foreach (['email', 'sms', 'whatsapp'] as $canal) {
+            foreach (['email', 'whatsapp'] as $canal) {
                 RegistroNotificacion::create([
                     'usuario_id' => $user->id,
                     'pedido_id' => $pedido->id,
@@ -120,18 +120,40 @@ class PedidoController extends Controller
         return new PedidoResource($pedido->load(['usuario', 'detalles.videojuego.generos']));
     }
 
-    public function actualizarEstado(ActualizarEstadoPedidoRequest $request, Pedido $pedido, WhatsAppService $whatsAppService): JsonResponse
+    public function actualizarEstado(
+        ActualizarEstadoPedidoRequest $request,
+        Pedido $pedido,
+        WhatsAppService $whatsAppService,
+    ): JsonResponse
     {
-        $pedido->update($request->validated());
-        $notificacion = $whatsAppService->enviarEstadoPedido($pedido->fresh(['usuario', 'detalles.videojuego.generos']));
+        $nuevoEstado = $request->validated('estado');
+
+        if ($pedido->estado === $nuevoEstado) {
+            return response()->json([
+                'mensaje' => 'El pedido ya tiene ese estado. No se envió una notificación de WhatsApp.',
+                'notificaciones' => [],
+                'data' => new PedidoResource($pedido->load(['usuario', 'detalles.videojuego.generos'])),
+            ]);
+        }
+
+        $pedido->update(['estado' => $nuevoEstado]);
+        $pedidoActualizado = $pedido->fresh(['usuario', 'detalles.videojuego.generos']);
+        $notificacionWhatsApp = $whatsAppService->enviarEstadoPedido($pedidoActualizado);
 
         return response()->json([
-            'mensaje' => 'Estado del pedido actualizado.',
-            'notificacion_whatsapp' => [
-                'estado' => $notificacion->estado,
-                'destinatario' => $notificacion->destinatario,
+            'mensaje' => 'Estado del pedido actualizado y notificación de WhatsApp procesada.',
+            'notificaciones' => [
+                'whatsapp' => $this->resumenNotificacion($notificacionWhatsApp),
             ],
-            'data' => new PedidoResource($pedido->load(['usuario', 'detalles.videojuego.generos'])),
+            'data' => new PedidoResource($pedidoActualizado),
         ]);
+    }
+
+    private function resumenNotificacion(RegistroNotificacion $notificacion): array
+    {
+        return [
+            'estado' => $notificacion->estado,
+            'destinatario' => $notificacion->destinatario,
+        ];
     }
 }
