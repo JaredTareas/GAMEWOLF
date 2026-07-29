@@ -1,0 +1,5 @@
+name: Produccion VPS
+variables:
+  - name: base_url
+    value: https://gamewolf.shop/api
+    description: ""

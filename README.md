@@ -69,6 +69,28 @@ En PowerShell, si aparece el error de scripts deshabilitados con `npm`, usa:
 npm.cmd run dev
 ```
 
+## Base de datos, seeders y respaldo
+
+- Motor usado: **MySQL 8 / InnoDB**. El proyecto no usa MariaDB.
+- Todas las tablas de negocio se crean con migraciones de Laravel; no se requiere crear tablas manualmente en phpMyAdmin.
+- `DatabaseSeeder` carga datos de demostración: 12 usuarios, 12 géneros, 12 videojuegos, 12 carritos, 12 pedidos, 24 detalles de pedido, 24 relaciones videojuego-género (N:M) y 12 registros de notificación.
+- Cada rol tiene usuarios de ejemplo y se conservan las credenciales de evaluación que aparecen abajo.
+
+Para reiniciar únicamente una base local de desarrollo y volver a cargar todos los datos de prueba:
+
+```bash
+cd backend
+php artisan migrate:fresh --seed
+```
+
+El archivo [gamewolf.sql](gamewolf.sql) es el respaldo de MySQL 8 actualizado. Para importarlo en una instancia local compatible:
+
+```bash
+mysql -u TU_USUARIO -p < gamewolf.sql
+```
+
+> `migrate:fresh --seed` elimina los datos actuales de la base seleccionada; úsalo solo en desarrollo o cuando se cuente con un respaldo.
+
 ## API base
 
 Local:
