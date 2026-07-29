@@ -1,6 +1,7 @@
 export const rutaPorVista = {
   Inicio: '/inicio',
   Videojuegos: '/videojuegos',
+  Géneros: '/generos',
   Pedidos: '/pedidos',
   Clientes: '/clientes',
   Usuarios: '/usuarios',

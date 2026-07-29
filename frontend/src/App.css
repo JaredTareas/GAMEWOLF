@@ -1213,6 +1213,31 @@ tbody tr:last-child td {
   gap: 12px;
 }
 
+.checkbox-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(143, 176, 255, 0.45);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, #fff, #f6f9ff);
+  color: #26364f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkbox-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2f6bff;
+}
+
 .modal-actions {
   justify-content: flex-end;
 }

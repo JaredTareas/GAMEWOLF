@@ -29,6 +29,8 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
     metaUsuarios,
     clientes,
     metaClientes,
+    generos,
+    metaGeneros,
     reporte,
     loading,
     error,
@@ -58,6 +60,12 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
     setClientesPage,
     saveUser,
     deleteUser,
+    saveGenero,
+    deleteGenero,
+    generosSearch,
+    setGenerosSearch,
+    generosPage,
+    setGenerosPage,
   } = useDashboardData(token, usuario.rol)
 
   return (
@@ -83,6 +91,7 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
         <GamesTable
           videojuegos={videojuegos}
           meta={metaVideojuegos}
+          generos={generos}
           search={videojuegosSearch}
           onSearch={(value) => { setVideojuegosSearch(value); setVideojuegosPage(1) }}
           onPageChange={setVideojuegosPage}
@@ -90,6 +99,17 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
           onSave={saveGame}
           onDelete={deleteGame}
           canDelete={usuario.rol === 'admin'}
+        />
+      )}
+      {activeView === 'Géneros' && usuario.rol === 'admin' && (
+        <GenresTable
+          generos={generos}
+          meta={metaGeneros}
+          search={generosSearch}
+          onSearch={(value) => { setGenerosSearch(value); setGenerosPage(1) }}
+          onPageChange={setGenerosPage}
+          onSave={saveGenero}
+          onDelete={deleteGenero}
         />
       )}
       {activeView === 'Pedidos' && (
@@ -253,7 +273,7 @@ function Metric({ label, value, tone }) {
   )
 }
 
-function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canManage = false, canDelete = false, onSave, onDelete }) {
+function GamesTable({ videojuegos, meta, generos = [], search, onSearch, onPageChange, canManage = false, canDelete = false, onSave, onDelete }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingGame, setEditingGame] = useState(null)
   
@@ -370,6 +390,7 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
       {modalOpen && (
         <GameFormModal
           videojuego={editingGame}
+          generos={generos}
           onClose={() => setModalOpen(false)}
           onSubmit={async (payload) => {
             await onSave(payload, editingGame?.id)
@@ -392,7 +413,7 @@ function GamesTable({ videojuegos, meta, search, onSearch, onPageChange, canMana
   )
 }
 
-function GameFormModal({ videojuego, onClose, onSubmit }) {
+function GameFormModal({ videojuego, generos = [], onClose, onSubmit }) {
   const [form, setForm] = useState({
     titulo: videojuego?.titulo ?? '',
     descripcion: videojuego?.descripcion ?? '',
@@ -401,6 +422,7 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
     stock: videojuego?.stock ?? '',
     imagen: videojuego?.imagen ?? '',
     estado: videojuego?.estado ?? 'activo',
+    genero_ids: videojuego?.generos?.map((genero) => genero.id) ?? [],
   })
   const [errors, setErrors] = useState({}) 
   const [apiError, setApiError] = useState('')
@@ -433,6 +455,19 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
     }
   }
 
+  function toggleGenero(generoId) {
+    setForm((current) => {
+      const existe = current.genero_ids.includes(generoId)
+
+      return {
+        ...current,
+        genero_ids: existe
+          ? current.genero_ids.filter((id) => id !== generoId)
+          : [...current.genero_ids, generoId],
+      }
+    })
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setApiError('')
@@ -462,6 +497,9 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
       formData.append('precio', Number(form.precio))
       formData.append('stock', Number(form.stock))
       formData.append('estado', form.estado)
+      form.genero_ids.forEach((generoId) => {
+        formData.append('genero_ids[]', generoId)
+      })
 
       if (form.imagen instanceof File) {
         formData.append('imagen', form.imagen)
@@ -519,6 +557,26 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
           </label>
         </div>
 
+        <label className="field">
+          <span>Géneros</span>
+          <div className="checkbox-list">
+            {generos.length === 0 ? (
+              <small style={{ color: '#667085' }}>Primero registra géneros desde el módulo Géneros.</small>
+            ) : (
+              generos.map((genero) => (
+                <label className="checkbox-option" key={genero.id}>
+                  <input
+                    type="checkbox"
+                    checked={form.genero_ids.includes(genero.id)}
+                    onChange={() => toggleGenero(genero.id)}
+                  />
+                  <span>{genero.nombre}</span>
+                </label>
+              ))
+            )}
+          </div>
+        </label>
+
         <div className="form-grid">
           <label className="field">
             <span>Stock</span>
@@ -559,6 +617,169 @@ function GameFormModal({ videojuego, onClose, onSubmit }) {
           </button>
           <button className="primary-button small" type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function GenresTable({ generos, meta, search, onSearch, onPageChange, onSave, onDelete }) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingGenre, setEditingGenre] = useState(null)
+  const [genreToDelete, setGenreToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  function openCreateModal() {
+    setEditingGenre(null)
+    setModalOpen(true)
+  }
+
+  function openEditModal(genero) {
+    setEditingGenre(genero)
+    setModalOpen(true)
+  }
+
+  async function handleConfirmDelete() {
+    if (!genreToDelete) return
+
+    setIsDeleting(true)
+    await onDelete(genreToDelete.id)
+    setIsDeleting(false)
+    setGenreToDelete(null)
+  }
+
+  return (
+    <DataPanel title="Gestión de géneros">
+      <div className="panel-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+        <input
+          type="text"
+          placeholder="Buscar género..."
+          value={search}
+          onChange={(event) => onSearch(event.target.value)}
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '250px' }}
+        />
+        <button className="primary-button small" type="button" onClick={openCreateModal}>
+          Agregar género
+        </button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Slug</th>
+            <th>Videojuegos asignados</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {generos.map((genero) => (
+            <tr key={genero.id}>
+              <td>{genero.nombre}</td>
+              <td>{genero.slug}</td>
+              <td>{genero.videojuegos_count ?? 0}</td>
+              <td>
+                <div className="table-actions">
+                  <button className="table-action" type="button" onClick={() => openEditModal(genero)}>
+                    Editar
+                  </button>
+                  <button className="table-action danger" type="button" onClick={() => setGenreToDelete(genero)}>
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {generos.length === 0 && (
+        <p className="empty-state">Todavía no hay géneros registrados.</p>
+      )}
+
+      <PaginationControls meta={meta} onPageChange={onPageChange} />
+
+      {modalOpen && (
+        <GenreFormModal
+          genero={editingGenre}
+          onClose={() => setModalOpen(false)}
+          onSubmit={async (payload) => {
+            await onSave(payload, editingGenre?.id)
+            setModalOpen(false)
+          }}
+        />
+      )}
+
+      {genreToDelete && (
+        <ConfirmModal
+          title="Eliminar género"
+          message={`¿Estás seguro de que deseas eliminar "${genreToDelete.nombre}"? Solo se podrá eliminar si no está asignado a videojuegos.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setGenreToDelete(null)}
+          isProcessing={isDeleting}
+        />
+      )}
+    </DataPanel>
+  )
+}
+
+function GenreFormModal({ genero, onClose, onSubmit }) {
+  const [nombre, setNombre] = useState(genero?.nombre ?? '')
+  const [error, setError] = useState('')
+  const [apiError, setApiError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setApiError('')
+
+    if (!nombre.trim()) {
+      setError('El nombre del género es obligatorio.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await onSubmit({ nombre: nombre.trim() })
+    } catch (err) {
+      setApiError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <form className="modal-card" onSubmit={handleSubmit}>
+        <div className="modal-heading">
+          <div>
+            <p className="eyebrow">Géneros</p>
+            <h2>{genero ? 'Editar género' : 'Agregar género'}</h2>
+          </div>
+          <button className="icon-button" type="button" onClick={onClose}>X</button>
+        </div>
+
+        <label className="field">
+          <span>Nombre del género</span>
+          <input
+            value={nombre}
+            onChange={(event) => {
+              setNombre(event.target.value)
+              setError(event.target.value.trim() ? '' : 'El nombre del género es obligatorio.')
+            }}
+          />
+          {error && <small style={{ color: '#dc2626', marginTop: '4px' }}>{error}</small>}
+        </label>
+
+        {apiError && <p className="form-error">{apiError}</p>}
+
+        <div className="modal-actions">
+          <button className="table-action" type="button" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="primary-button small" type="submit" disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar género'}
           </button>
         </div>
       </form>

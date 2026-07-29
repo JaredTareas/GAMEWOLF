@@ -95,6 +95,7 @@ function App() {
       <Route path="/" element={<Navigate to={rutaInicialPorRol(usuario.rol)} replace />} />
       <Route path="/inicio" element={page('Inicio', rolesInternos)} />
       <Route path="/videojuegos" element={page('Videojuegos', rolesInternos)} />
+      <Route path="/generos" element={page('Géneros', ['admin'])} />
       <Route path="/pedidos" element={page('Pedidos', rolesInternos)} />
       <Route path="/clientes" element={page('Clientes', rolesInternos)} />
       <Route path="/usuarios" element={page('Usuarios', ['admin'])} />

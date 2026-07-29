@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\CarritoController;
+use App\Http\Controllers\Api\GeneroController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\UsuarioController;
@@ -15,6 +16,8 @@ Route::post('/autenticacion/restablecer-contrasena', [AutenticacionController::c
 
 Route::get('/videojuegos', [VideojuegoController::class, 'index']);
 Route::get('/videojuegos/{videojuego}', [VideojuegoController::class, 'show']);
+Route::get('/generos', [GeneroController::class, 'index']);
+Route::get('/generos/{genero}', [GeneroController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/autenticacion/perfil', [AutenticacionController::class, 'perfil']);
@@ -45,6 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('rol:admin')->group(function () {
+        Route::post('/generos', [GeneroController::class, 'store']);
+        Route::put('/generos/{genero}', [GeneroController::class, 'update']);
+        Route::delete('/generos/{genero}', [GeneroController::class, 'destroy']);
         Route::post('/usuarios', [UsuarioController::class, 'store']);
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy']);
     });

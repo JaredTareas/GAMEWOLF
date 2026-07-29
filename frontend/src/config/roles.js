@@ -3,7 +3,7 @@ export const roles = {
     key: 'admin',
     label: 'Administrador',
     // Agregamos 'Perfil' al final del arreglo
-    nav: ['Inicio', 'Videojuegos', 'Pedidos', 'Clientes', 'Usuarios', 'Reportes', 'Configuracion', 'Perfil'],
+    nav: ['Inicio', 'Videojuegos', 'Géneros', 'Pedidos', 'Clientes', 'Usuarios', 'Reportes', 'Configuracion', 'Perfil'],
   },
   empleado: {
     key: 'empleado',

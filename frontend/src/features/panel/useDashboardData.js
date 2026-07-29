@@ -25,6 +25,8 @@ export function useDashboardData(token, rol) {
     metaUsuarios: null,
     clientes: [],
     metaClientes: null,
+    generos: [],
+    metaGeneros: null,
     reporte: null,
     loading: true,
     error: '',
@@ -40,6 +42,8 @@ export function useDashboardData(token, rol) {
   const [usuariosPage, setUsuariosPage] = useState(1)
   const [clientesSearch, setClientesSearch] = useState('')
   const [clientesPage, setClientesPage] = useState(1)
+  const [generosSearch, setGenerosSearch] = useState('')
+  const [generosPage, setGenerosPage] = useState(1)
   const [refreshKey, setRefreshKey] = useState(0)
 
   function showNotice(message) {
@@ -83,14 +87,20 @@ export function useDashboardData(token, rol) {
         page: clientesPage,
         per_page: 10,
       })
+      const generosQuery = createQuery({
+        search: generosSearch,
+        page: generosPage,
+        per_page: 10,
+      })
       const puedeConsultarUsuarios = ['admin', 'empleado'].includes(rol)
 
       try {
-        const [videojuegosRes, pedidosRes, usuariosRes, clientesRes, reporteRes] = await Promise.all([
+        const [videojuegosRes, pedidosRes, usuariosRes, clientesRes, generosRes, reporteRes] = await Promise.all([
           apiRequest(`/videojuegos?${videojuegosQuery}`),
           apiRequest(`/pedidos?${pedidosQuery}`, { token }),
           rol === 'admin' ? apiRequest(`/usuarios?${usuariosQuery}`, { token }) : Promise.resolve(emptyListResponse),
           puedeConsultarUsuarios ? apiRequest(`/usuarios?${clientesQuery}`, { token }) : Promise.resolve(emptyListResponse),
+          apiRequest(`/generos?${generosQuery}`, { token }),
           puedeConsultarUsuarios ? apiRequest('/reportes/resumen', { token }) : Promise.resolve({ data: null }),
         ])
 
@@ -105,6 +115,8 @@ export function useDashboardData(token, rol) {
           metaUsuarios: usuariosRes.meta ?? null,
           clientes: clientesRes.data ?? [],
           metaClientes: clientesRes.meta ?? null,
+          generos: generosRes.data ?? [],
+          metaGeneros: generosRes.meta ?? null,
           reporte: reporteRes.data ?? null,
           loading: false,
           error: '',
@@ -135,6 +147,8 @@ export function useDashboardData(token, rol) {
     usuariosPage,
     clientesSearch,
     clientesPage,
+    generosSearch,
+    generosPage,
     refreshKey,
   ])
 
@@ -231,6 +245,36 @@ export function useDashboardData(token, rol) {
     }
   }
 
+  async function saveGenero(payload, generoId = null) {
+    setState((current) => ({ ...current, error: '' }))
+
+    try {
+      const response = await apiRequest(generoId ? `/generos/${generoId}` : '/generos', {
+        method: generoId ? 'PUT' : 'POST',
+        token,
+        body: payload,
+      })
+
+      showNotice(response.mensaje || (generoId ? 'Género actualizado.' : 'Género creado.'))
+      reloadData()
+    } catch (err) {
+      setState((current) => ({ ...current, error: err.message }))
+      throw err
+    }
+  }
+
+  async function deleteGenero(generoId) {
+    setState((current) => ({ ...current, error: '' }))
+
+    try {
+      const response = await apiRequest(`/generos/${generoId}`, { method: 'DELETE', token })
+      showNotice(response.mensaje || 'Género eliminado.')
+      reloadData()
+    } catch (err) {
+      setState((current) => ({ ...current, error: err.message }))
+    }
+  }
+
   return {
     ...state,
     saveGame,
@@ -238,6 +282,8 @@ export function useDashboardData(token, rol) {
     updateOrderStatus,
     saveUser,
     deleteUser,
+    saveGenero,
+    deleteGenero,
     videojuegosSearch,
     setVideojuegosSearch,
     videojuegosPage,
@@ -258,5 +304,9 @@ export function useDashboardData(token, rol) {
     setClientesSearch,
     clientesPage,
     setClientesPage,
+    generosSearch,
+    setGenerosSearch,
+    generosPage,
+    setGenerosPage,
   }
 }

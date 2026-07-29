@@ -72,6 +72,7 @@ function navIcon(item) {
   const icons = {
     Inicio: <Home size={23} strokeWidth={2.5} />,
     Videojuegos: <Gamepad2 size={23} strokeWidth={2.5} />,
+    Géneros: <Gamepad2 size={23} strokeWidth={2.5} />,
     Pedidos: <ShoppingCart size={23} strokeWidth={2.5} />,
     Clientes: <Users size={23} strokeWidth={2.5} />,
     Usuarios: <UserCircle size={23} strokeWidth={2.5} />,
