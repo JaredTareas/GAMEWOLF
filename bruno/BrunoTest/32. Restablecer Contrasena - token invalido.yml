@@ -1,0 +1,32 @@
+info:
+  name: 32. Restablecer contrasena - token invalido
+  type: http
+  seq: 32
+
+http:
+  method: POST
+  url: "{{base_url}}/autenticacion/restablecer-contrasena"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "cliente@gamewolf.test",
+        "token": "token-invalido",
+        "password": "GameWolf#2026",
+        "password_confirmation": "GameWolf#2026"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Un token invalido de recuperacion no debe restablecer contrasena", function() {
+          expect([400, 422]).to.include(res.status);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

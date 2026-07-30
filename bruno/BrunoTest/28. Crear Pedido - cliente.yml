@@ -1,0 +1,35 @@
+info:
+  name: 28. Crear pedido - cliente
+  type: http
+  seq: 28
+
+http:
+  method: POST
+  url: "{{base_url}}/pedidos"
+  body:
+    type: json
+    data: |-
+      {}
+  auth:
+    type: bearer
+    token: "{{token_cliente}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if(res.status === 201) {
+          bru.setVar("pedido_id", res.body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("El cliente puede crear un pedido desde el carrito", function() {
+          expect(res.status).to.equal(201);
+          expect(res.body.data.estado).to.equal('pendiente');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

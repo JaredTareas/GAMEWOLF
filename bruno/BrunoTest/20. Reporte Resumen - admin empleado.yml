@@ -1,0 +1,26 @@
+info:
+  name: 20. Reporte resumen - admin o empleado
+  type: http
+  seq: 20
+
+http:
+  method: GET
+  url: "{{base_url}}/reportes/resumen"
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Admin o empleado puede consultar reportes", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data).to.be.an('object');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,26 @@
+info:
+  name: 33. Cerrar sesion - cliente
+  type: http
+  seq: 33
+
+http:
+  method: POST
+  url: "{{base_url}}/autenticacion/cerrar-sesion"
+  auth:
+    type: bearer
+    token: "{{token_cliente}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("El cliente puede cerrar sesion", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.mensaje).to.be.a('string');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,39 @@
+info:
+  name: 18. Actualizar videojuego - admin o empleado
+  type: http
+  seq: 18
+
+http:
+  method: PUT
+  url: "{{base_url}}/videojuegos/15"
+  body:
+    type: json
+    data: |-
+      {
+        "titulo": "FC26",
+        "descripcion": "Videojuego actualizado desde Bruno.",
+        "plataforma": "PC",
+        "precio": 600,
+        "stock": 8,
+        "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
+        "estado": "activo",
+        "genero_ids": ["3"]
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Admin o empleado puede actualizar videojuegos", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.titulo).to.equal(bru.getVar("videojuego_titulo_actualizado"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

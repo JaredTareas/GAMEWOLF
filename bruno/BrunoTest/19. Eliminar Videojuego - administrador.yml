@@ -1,0 +1,25 @@
+info:
+  name: 19. Eliminar videojuego - administrador
+  type: http
+  seq: 19
+
+http:
+  method: DELETE
+  url: "{{base_url}}/videojuegos/14"
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("El administrador puede eliminar videojuegos que no estan en pedidos", function() {
+          expect(res.status).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

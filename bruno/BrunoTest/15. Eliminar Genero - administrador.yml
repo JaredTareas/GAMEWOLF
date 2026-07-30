@@ -1,0 +1,25 @@
+info:
+  name: 15. Eliminar genero - administrador
+  type: http
+  seq: 15
+
+http:
+  method: DELETE
+  url: "{{base_url}}/generos/{{genero_creado_id}}"
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("El administrador puede eliminar un genero sin videojuegos asignados", function() {
+          expect(res.status).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

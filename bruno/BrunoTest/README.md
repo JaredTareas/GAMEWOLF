@@ -1,46 +1,55 @@
-# Pruebas API con Bruno
+# Coleccion Bruno - GameWolf
 
-Colección ejecutable de GameWolf para **Bruno** (formato OpenCollection YAML). Usa el entorno **Producción VPS** con la URL base:
+Esta coleccion sirve para probar los endpoints principales de la API de GameWolf.
+
+## Ambiente
+
+Usar el ambiente:
 
 ```text
-https://gamewolf.shop/api
+Produccion VPS
 ```
 
-## Cómo ejecutarla
+La variable principal es:
 
-1. Abre la carpeta `bruno/BrunoTest` en Bruno.
-2. Selecciona el entorno **Producción VPS**.
-3. Ejecuta la colección en orden, desde `01. Iniciar sesión - administrador`.
-4. Bruno guarda los tokens de administrador y cliente durante la ejecución para las peticiones siguientes.
+```text
+base_url = https://gamewolf.shop/api
+```
 
-La colección no crea, modifica ni elimina videojuegos, usuarios ni pedidos de producción. La petición `GET /carrito` puede crear un carrito vacío si el cliente aún no tiene uno activo, porque ese es el comportamiento actual de la API.
+## Orden recomendado
 
-## Última ejecución verificada
+Para que las variables se llenen solas, correr primero:
 
-- Fecha: 29 de julio de 2026.
-- Entorno: **Producción VPS** (`https://gamewolf.shop/api`).
-- Resultado: **10/10 requests correctos y 11/11 pruebas correctas** mediante Bruno CLI.
+1. `01. Iniciar sesion - administrador`
+2. `05. Iniciar sesion - cliente`
+3. `10. Videojuegos con filtro y paginacion`
+4. `11. Listar generos`
 
-## Cobertura incluida
+Despues ya se pueden correr los endpoints de CRUD, carrito, pedidos, usuarios y reportes.
 
-| Escenario | Petición | Resultado esperado |
-| --- | --- | --- |
-| Login y token de administrador | `POST /autenticacion/iniciar-sesion` | `200`, token Sanctum y rol admin. |
-| Token en ruta protegida | `GET /autenticacion/perfil` | `200` con token admin. |
-| Pedidos protegidos/paginados | `GET /pedidos?per_page=2` | `200` y metadatos de paginación. |
-| Error de validación | `POST /videojuegos` con datos incompletos | `422`. |
-| Login y carrito de cliente | Login cliente + `GET /carrito` | `200`. |
-| Acceso denegado por rol | Admin en `GET /carrito` | `403`. |
-| Sin autenticación | `GET /autenticacion/perfil` sin token | `401`. |
-| Recurso no encontrado | `GET /videojuegos/999999` | `404`. |
-| Filtro y paginación | `GET /videojuegos?search=Elden&per_page=2` | `200` con paginación server-side. |
+## Variables que se generan automaticamente
 
-## Rutas reales del proyecto
+- `token_admin`
+- `token_cliente`
+- `videojuego_id`
+- `genero_id`
+- `genero_creado_id`
+- `videojuego_creado_id`
+- `usuario_creado_id`
+- `articulo_carrito_id`
+- `pedido_id`
 
-La colección sigue `backend/routes/api.php`. Por eso no se incluyen `/categorias` ni `/clientes`: no son endpoints expuestos por la API actual.
+## Modulos cubiertos
 
-- Los géneros se gestionan mediante `genero_ids` al crear o actualizar videojuegos.
-- Los clientes son usuarios con rol `cliente`; se consultan mediante `GET /usuarios?rol=cliente` para los roles autorizados.
-- Los artículos del carrito usan `/carrito/articulos/{articuloCarrito}`, no `/carrito/{id}`.
+- Autenticacion
+- Recuperacion de contrasena
+- Perfil protegido
+- Videojuegos
+- Generos
+- Carrito de compras
+- Pedidos
+- Usuarios
+- Reportes
+- Casos de error 401, 403, 404 y 422
 
-Las pruebas de creación, edición, borrado de videojuegos y cambios de estado de pedido se hacen manualmente durante la demo, porque modifican datos y el último caso puede disparar una notificación de WhatsApp.
+Nota: algunas pruebas crean registros temporales para demostrar POST, PUT y DELETE. Por eso se recomienda correrlas en el ambiente de pruebas o con datos de demostracion.

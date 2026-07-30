@@ -1,0 +1,44 @@
+info:
+  name: 23. Crear usuario - administrador
+  type: http
+  seq: 23
+
+http:
+  method: POST
+  url: "{{base_url}}/usuarios"
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Usuario Bruno",
+        "email": "{{usuario_email}}",
+        "password": "GameWolf#2026",
+        "telefono": "+5215550001999",
+        "rol": "cliente"
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: pre-request
+      code: |-
+        bru.setVar("usuario_email", "bruno" + Date.now() + "@gamewolf.test");
+    - type: after-response
+      code: |-
+        if(res.status === 201) {
+          bru.setVar("usuario_creado_id", res.body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("El administrador puede crear usuarios", function() {
+          expect(res.status).to.equal(201);
+          expect(res.body.data.email).to.equal(bru.getVar("usuario_email"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

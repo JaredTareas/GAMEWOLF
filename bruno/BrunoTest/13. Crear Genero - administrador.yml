@@ -1,0 +1,40 @@
+info:
+  name: 13. Crear genero - administrador
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{base_url}}/generos"
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "{{genero_nombre}}"
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: pre-request
+      code: |-
+        bru.setVar("genero_nombre", "Bruno Genero " + Date.now());
+    - type: after-response
+      code: |-
+        if(res.status === 201) {
+          bru.setVar("genero_creado_id", res.body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("El administrador puede crear generos", function() {
+          expect(res.status).to.equal(201);
+          expect(res.body.data.nombre).to.equal(bru.getVar("genero_nombre"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

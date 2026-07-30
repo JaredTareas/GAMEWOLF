@@ -1,0 +1,25 @@
+info:
+  name: 25. Eliminar usuario - administrador
+  type: http
+  seq: 25
+
+http:
+  method: DELETE
+  url: "{{base_url}}/usuarios/{{usuario_creado_id}}"
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("El administrador puede eliminar usuarios", function() {
+          expect(res.status).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

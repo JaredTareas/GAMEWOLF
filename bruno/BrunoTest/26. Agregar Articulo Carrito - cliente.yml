@@ -1,0 +1,40 @@
+info:
+  name: 26. Agregar articulo al carrito - cliente
+  type: http
+  seq: 26
+
+http:
+  method: POST
+  url: "{{base_url}}/carrito/articulos"
+  body:
+    type: json
+    data: |-
+      {
+        "videojuego_id": "{{videojuego_id}}",
+        "cantidad": 1
+      }
+  auth:
+    type: bearer
+    token: "{{token_cliente}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if((res.status === 200 || res.status === 201) && res.body.data.detalles.length > 0) {
+          const item = res.body.data.detalles[0];
+          bru.setVar("articulo_carrito_id", item.id);
+          bru.setVar("articulo_videojuego_id", item.videojuego.id);
+        }
+    - type: tests
+      code: |-
+        test("El cliente puede agregar videojuegos al carrito", function() {
+          expect([200, 201]).to.include(res.status);
+          expect(res.body.data.detalles).to.be.an('array');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

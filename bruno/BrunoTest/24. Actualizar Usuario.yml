@@ -1,0 +1,35 @@
+info:
+  name: 24. Actualizar usuario
+  type: http
+  seq: 24
+
+http:
+  method: PUT
+  url: "{{base_url}}/usuarios/{{usuario_creado_id}}"
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Usuario Bruno Editado",
+        "email": "{{usuario_email}}",
+        "telefono": "+5215550001888",
+        "rol": "cliente"
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Se puede actualizar un usuario", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.nombre).to.equal("Usuario Bruno Editado");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

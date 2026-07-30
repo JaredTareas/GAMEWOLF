@@ -5,7 +5,34 @@ variables:
     description: URL base de la API desplegada en el VPS.
   - name: token_admin
     value: ""
-    description: Se obtiene automáticamente al ejecutar primero el login de administrador.
+    description: Se obtiene al ejecutar el login de administrador.
   - name: token_cliente
     value: ""
-    description: Se obtiene automáticamente al ejecutar el login de cliente.
+    description: Se obtiene al ejecutar el login de cliente.
+  - name: videojuego_id
+    value: ""
+    description: Se obtiene al listar videojuegos.
+  - name: videojuego_creado_id
+    value: ""
+    description: Se obtiene al crear un videojuego desde Bruno.
+  - name: genero_id
+    value: ""
+    description: Se obtiene al listar generos.
+  - name: genero_creado_id
+    value: ""
+    description: Se obtiene al crear un genero desde Bruno.
+  - name: usuario_id
+    value: ""
+    description: Se obtiene al listar usuarios.
+  - name: usuario_creado_id
+    value: ""
+    description: Se obtiene al crear un usuario desde Bruno.
+  - name: articulo_carrito_id
+    value: ""
+    description: Se obtiene al agregar un articulo al carrito.
+  - name: articulo_videojuego_id
+    value: ""
+    description: Videojuego asociado al articulo del carrito.
+  - name: pedido_id
+    value: ""
+    description: Se obtiene al crear un pedido.

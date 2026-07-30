@@ -1,0 +1,30 @@
+info:
+  name: 31. Solicitar recuperacion de contrasena
+  type: http
+  seq: 31
+
+http:
+  method: POST
+  url: "{{base_url}}/autenticacion/recuperar-contrasena"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "cliente@gamewolf.test"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Se puede solicitar recuperacion de contrasena", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.mensaje).to.be.a('string');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

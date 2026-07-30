@@ -1,0 +1,44 @@
+info:
+  name: 17. Crear videojuego - admin o empleado
+  type: http
+  seq: 17
+
+http:
+  method: POST
+  url: "{{base_url}}/videojuegos"
+  body:
+    type: json
+    data: |-
+      {
+        "titulo": "FC26",
+        "descripcion": "JUEGO DE SIMULACION DE FUTBALL",
+        "plataforma": "PC",
+        "precio": 499,
+        "stock": 6,
+        "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
+        "estado": "activo",
+        "genero_ids": [2]
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if(res.status === 201) {
+          bru.setVar("videojuego_creado_id", res.body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("Admin o empleado puede crear videojuegos", function() {
+          expect(res.status).to.equal(201);
+          expect(res.body.data.titulo).to.equal(bru.getVar("videojuego_titulo"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,35 @@
+info:
+  name: 14. Actualizar genero - administrador
+  type: http
+  seq: 14
+
+http:
+  method: PUT
+  url: "{{base_url}}/generos/{{genero_creado_id}}"
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "{{genero_nombre_actualizado}}"
+      }
+  auth:
+    type: bearer
+    token: "{{token_admin}}"
+
+runtime:
+  scripts:
+    - type: pre-request
+      code: |-
+        bru.setVar("genero_nombre_actualizado", "Bruno Genero Editado " + Date.now());
+    - type: tests
+      code: |-
+        test("El administrador puede actualizar generos", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.nombre).to.equal(bru.getVar("genero_nombre_actualizado"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
