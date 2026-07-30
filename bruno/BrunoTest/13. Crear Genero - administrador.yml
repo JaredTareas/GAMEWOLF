@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "nombre": "{{genero_nombre}}"
+        "nombre": "Genero Bruno de prueba"
       }
   auth:
     type: bearer
@@ -18,9 +18,6 @@ http:
 
 runtime:
   scripts:
-    - type: pre-request
-      code: |-
-        bru.setVar("genero_nombre", "Bruno Genero " + Date.now());
     - type: after-response
       code: |-
         if(res.status === 201) {
@@ -30,7 +27,7 @@ runtime:
       code: |-
         test("El administrador puede crear generos", function() {
           expect(res.status).to.equal(201);
-          expect(res.body.data.nombre).to.equal(bru.getVar("genero_nombre"));
+          expect(res.body.data.nombre).to.equal("Genero Bruno de prueba");
         });
 
 settings:

@@ -11,7 +11,7 @@ http:
     data: |-
       {
         "nombre": "Usuario Bruno Editado",
-        "email": "{{usuario_email}}",
+        "email": "bruno.prueba@gamewolf.test",
         "telefono": "+5215550001888",
         "rol": "cliente"
       }

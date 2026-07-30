@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "nombre": "{{genero_nombre_actualizado}}"
+        "nombre": "Genero Bruno actualizado"
       }
   auth:
     type: bearer
@@ -18,14 +18,11 @@ http:
 
 runtime:
   scripts:
-    - type: pre-request
-      code: |-
-        bru.setVar("genero_nombre_actualizado", "Bruno Genero Editado " + Date.now());
     - type: tests
       code: |-
         test("El administrador puede actualizar generos", function() {
           expect(res.status).to.equal(200);
-          expect(res.body.data.nombre).to.equal(bru.getVar("genero_nombre_actualizado"));
+          expect(res.body.data.nombre).to.equal("Genero Bruno actualizado");
         });
 
 settings:

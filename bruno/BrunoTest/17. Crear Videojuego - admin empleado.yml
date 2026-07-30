@@ -10,14 +10,14 @@ http:
     type: json
     data: |-
       {
-        "titulo": "{{videojuego_titulo}}",
+        "titulo": "Videojuego Bruno de prueba",
         "descripcion": "JUEGO DE SIMULACION DE FUTBALL",
         "plataforma": "PC",
         "precio": 499,
         "stock": 6,
         "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
         "estado": "activo",
-        "genero_ids": ["{{genero_id}}"]
+        "genero_ids": [2]
       }
   auth:
     type: bearer
@@ -25,9 +25,6 @@ http:
 
 runtime:
   scripts:
-    - type: pre-request
-      code: |-
-        bru.setVar("videojuego_titulo", "Videojuego Bruno " + Date.now());
     - type: after-response
       code: |-
         if(res.status === 201) {
@@ -37,7 +34,7 @@ runtime:
       code: |-
         test("Admin o empleado puede crear videojuegos", function() {
           expect(res.status).to.equal(201);
-          expect(res.body.data.titulo).to.equal(bru.getVar("videojuego_titulo"));
+          expect(res.body.data.titulo).to.equal("Videojuego Bruno de prueba");
         });
 
 settings:

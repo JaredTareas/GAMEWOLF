@@ -10,14 +10,14 @@ http:
     type: json
     data: |-
       {
-        "titulo": "{{videojuego_titulo_actualizado}}",
+        "titulo": "Videojuego Bruno actualizado",
         "descripcion": "Videojuego actualizado desde Bruno.",
         "plataforma": "PC",
         "precio": 600,
         "stock": 8,
         "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
         "estado": "activo",
-        "genero_ids": ["{{genero_id}}"]
+        "genero_ids": [2]
       }
   auth:
     type: bearer
@@ -25,14 +25,11 @@ http:
 
 runtime:
   scripts:
-    - type: pre-request
-      code: |-
-        bru.setVar("videojuego_titulo_actualizado", "Videojuego Bruno Editado " + Date.now());
     - type: tests
       code: |-
         test("Admin o empleado puede actualizar videojuegos", function() {
           expect(res.status).to.equal(200);
-          expect(res.body.data.titulo).to.equal(bru.getVar("videojuego_titulo_actualizado"));
+          expect(res.body.data.titulo).to.equal("Videojuego Bruno actualizado");
         });
 
 settings:

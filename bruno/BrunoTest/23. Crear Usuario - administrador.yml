@@ -11,7 +11,7 @@ http:
     data: |-
       {
         "nombre": "Usuario Bruno",
-        "email": "{{usuario_email}}",
+        "email": "bruno.prueba@gamewolf.test",
         "password": "GameWolf#2026",
         "telefono": "+5215550001999",
         "rol": "cliente"
@@ -22,9 +22,6 @@ http:
 
 runtime:
   scripts:
-    - type: pre-request
-      code: |-
-        bru.setVar("usuario_email", "bruno" + Date.now() + "@gamewolf.test");
     - type: after-response
       code: |-
         if(res.status === 201) {
@@ -34,7 +31,7 @@ runtime:
       code: |-
         test("El administrador puede crear usuarios", function() {
           expect(res.status).to.equal(201);
-          expect(res.body.data.email).to.equal(bru.getVar("usuario_email"));
+          expect(res.body.data.email).to.equal("bruno.prueba@gamewolf.test");
         });
 
 settings:
