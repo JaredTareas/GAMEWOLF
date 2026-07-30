@@ -332,7 +332,7 @@
 }
 
 .login-card .primary-button {
-  background: linear-gradient(135deg, #00c8ff 0%, #1769ff 36%, #6738ff 72%, #9f65ff 100%);
+  background: linear-gradient(135deg, #00c8ff 0%, #08193a 36%, #6738ff 72%, #9f65ff 100%);
   box-shadow:
     0 18px 34px rgba(23, 105, 255, 0.34),
     0 0 22px rgba(0, 217, 255, 0.16);
