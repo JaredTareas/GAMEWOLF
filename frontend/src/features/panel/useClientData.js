@@ -27,6 +27,9 @@ export function useClientData(token) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [addingGameId, setAddingGameId] = useState(null)
+  const [cartItemLoadingId, setCartItemLoadingId] = useState(null)
+  const [cartActionLoading, setCartActionLoading] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
 
   function showNotice(message) {
@@ -89,6 +92,7 @@ export function useClientData(token) {
 
   async function addToCart(videojuegoId) {
     setError('')
+    setAddingGameId(videojuegoId)
     try {
       const response = await apiRequest('/carrito/articulos', {
         method: 'POST',
@@ -99,11 +103,14 @@ export function useClientData(token) {
       showNotice('Videojuego agregado al carrito.')
     } catch (err) {
       setError(err.message)
+    } finally {
+      setAddingGameId(null)
     }
   }
 
   async function updateCartItem(detalle, cantidad) {
     setError('')
+    setCartItemLoadingId(detalle.id)
     try {
       const response = await apiRequest(`/carrito/articulos/${detalle.id}`, {
         method: 'PUT',
@@ -117,11 +124,14 @@ export function useClientData(token) {
       showNotice('Cantidad actualizada.')
     } catch (err) {
       setError(err.message)
+    } finally {
+      setCartItemLoadingId(null)
     }
   }
 
   async function removeCartItem(detalleId) {
     setError('')
+    setCartActionLoading('Quitando videojuego del carrito...')
     try {
       const response = await apiRequest(`/carrito/articulos/${detalleId}`, {
         method: 'DELETE',
@@ -131,17 +141,22 @@ export function useClientData(token) {
       showNotice('Videojuego eliminado del carrito.')
     } catch (err) {
       setError(err.message)
+    } finally {
+      setCartActionLoading('')
     }
   }
 
   async function createOrder() {
     setError('')
+    setCartActionLoading('Confirmando compra...')
     try {
       await apiRequest('/pedidos', { method: 'POST', token, body: {} })
       showNotice('Compra confirmada correctamente.')
       reloadData()
     } catch (err) {
       setError(err.message)
+    } finally {
+      setCartActionLoading('')
     }
   }
 
@@ -154,6 +169,9 @@ export function useClientData(token) {
     loading,
     error,
     notice,
+    addingGameId,
+    cartItemLoadingId,
+    cartActionLoading,
     addToCart,
     updateCartItem,
     removeCartItem,

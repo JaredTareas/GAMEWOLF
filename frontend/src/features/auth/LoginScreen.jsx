@@ -298,6 +298,7 @@ export default function LoginScreen({ onLogin }) {
 
           {apiError && <p className="form-error">{apiError}</p>}
           {notice && <p className="form-success" style={{ color: '#16a34a' }}>{notice}</p>}
+          {loading && <p className="loading-text">Procesando solicitud, espera un momento...</p>}
 
           <button className="primary-button" type="submit" disabled={loading}>
             {authMode === 'login' && (loading ? 'Entrando...' : 'Entrar')}

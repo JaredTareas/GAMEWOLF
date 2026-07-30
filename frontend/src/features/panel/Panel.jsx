@@ -75,6 +75,7 @@ function AdminEmployeeView({ usuario, token, activeView, title }) {
       {error && <p className="form-error">{error}</p>}
       {notice && <p className="toast-message">{notice}</p>}
       {loading && <p className="loading-text">Cargando informacion...</p>}
+      {loading && <LoadingBlock message="Actualizando datos del panel..." />}
 
       {activeView === 'Inicio' && (
         <>
@@ -173,6 +174,9 @@ function ClientView({ activeView, title, usuario, token }) {
     loading,
     error,
     notice,
+    addingGameId,
+    cartItemLoadingId,
+    cartActionLoading,
     addToCart,
     updateCartItem,
     removeCartItem,
@@ -196,6 +200,7 @@ function ClientView({ activeView, title, usuario, token }) {
       {error && <p className="form-error">{error}</p>}
       {notice && <p className="toast-message">{notice}</p>}
       {loading && <p className="loading-text">Cargando informacion...</p>}
+      {loading && <LoadingBlock message="Cargando catalogo, pedidos y carrito..." />}
 
       {activeView === 'Catalogo' && (
         <DataPanel title="Catálogo de videojuegos">
@@ -217,8 +222,12 @@ function ClientView({ activeView, title, usuario, token }) {
               <p>{videojuego.plataforma}</p>
               <p>{videojuego.generos?.map((genero) => genero.nombre).join(', ') || 'Sin género'}</p>
               <strong>${videojuego.precio}</strong>
-              <button type="button" onClick={() => addToCart(videojuego.id)}>
-                Agregar al carrito
+              <button
+                type="button"
+                onClick={() => addToCart(videojuego.id)}
+                disabled={addingGameId === videojuego.id}
+              >
+                {addingGameId === videojuego.id ? 'Agregando...' : 'Agregar al carrito'}
               </button>
             </article>
           ))}
@@ -233,6 +242,8 @@ function ClientView({ activeView, title, usuario, token }) {
           onConfirm={createOrder}
           onUpdateItem={updateCartItem}
           onRemoveItem={removeCartItem}
+          cartItemLoadingId={cartItemLoadingId}
+          cartActionLoading={cartActionLoading}
         />
       )}
       {activeView === 'Mis pedidos' && (
@@ -270,6 +281,15 @@ function Metric({ label, value, tone }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
+  )
+}
+
+function LoadingBlock({ message = 'Cargando datos...' }) {
+  return (
+    <div className="loading-block" role="status" aria-live="polite">
+      <span className="loading-spinner" aria-hidden="true" />
+      <strong>{message}</strong>
+    </div>
   )
 }
 
@@ -902,6 +922,7 @@ function OrdersTable({
                     className="status-select"
                     value={pedido.estado}
                     onChange={(event) => requestStatusChange(pedido, event.target.value)}
+                    disabled={isUpdatingStatus}
                   >
                     <option value="pendiente">pendiente</option>
                     <option value="pagado">pagado</option>
@@ -1209,11 +1230,12 @@ function SettingsPanel() {
   )
 }
 
-function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
+function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem, cartItemLoadingId = null, cartActionLoading = '' }) {
   const detalles = carrito?.detalles ?? []
   const [detalleToRemove, setDetalleToRemove] = useState(null)
   const [purchaseToConfirm, setPurchaseToConfirm] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const isCartBusy = Boolean(cartActionLoading) || isProcessing
 
   async function confirmRemoveItem() {
     if (!detalleToRemove) return
@@ -1239,6 +1261,7 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
 
   return (
     <DataPanel title="Carrito de compras">
+      {cartActionLoading && <LoadingBlock message={cartActionLoading} />}
       {detalles.length === 0 ? (
         <p className="empty-state">Tu carrito está vacío. Agrega videojuegos desde el catálogo.</p>
       ) : (
@@ -1262,20 +1285,29 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
                     <button
                       type="button"
                       onClick={() => onUpdateItem(detalle, Math.max(1, detalle.cantidad - 1))}
-                      disabled={detalle.cantidad <= 1}
+                      disabled={detalle.cantidad <= 1 || cartItemLoadingId === detalle.id || isCartBusy}
                     >
                       -
                     </button>
-                    <span>{detalle.cantidad}</span>
-                    <button type="button" onClick={() => onUpdateItem(detalle, detalle.cantidad + 1)}>
+                    <span>{cartItemLoadingId === detalle.id ? '...' : detalle.cantidad}</span>
+                    <button
+                      type="button"
+                      onClick={() => onUpdateItem(detalle, detalle.cantidad + 1)}
+                      disabled={cartItemLoadingId === detalle.id || isCartBusy}
+                    >
                       +
                     </button>
                   </div>
                 </td>
                 <td>${detalle.subtotal}</td>
                 <td>
-                  <button className="table-action danger" type="button" onClick={() => setDetalleToRemove(detalle)}>
-                    Quitar
+                  <button
+                    className="table-action danger"
+                    type="button"
+                    onClick={() => setDetalleToRemove(detalle)}
+                    disabled={cartItemLoadingId === detalle.id || isCartBusy}
+                  >
+                    {cartItemLoadingId === detalle.id ? 'Actualizando...' : 'Quitar'}
                   </button>
                 </td>
               </tr>
@@ -1286,8 +1318,8 @@ function CartPanel({ carrito, onConfirm, onUpdateItem, onRemoveItem }) {
       <div className="cart-total">
         <span>Total</span>
         <strong>${carrito?.total ?? 0}</strong>
-        <button type="button" onClick={() => setPurchaseToConfirm(true)} disabled={!detalles.length}>
-          Confirmar compra
+        <button type="button" onClick={() => setPurchaseToConfirm(true)} disabled={!detalles.length || isCartBusy}>
+          {cartActionLoading ? 'Procesando...' : 'Confirmar compra'}
         </button>
       </div>
 
