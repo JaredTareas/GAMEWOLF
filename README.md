@@ -104,6 +104,15 @@ GAMEWOLF/
   assets/    Imágenes y recursos visuales
 ```
 
+## Sitio publicado y API
+
+- Aplicación web: [https://gamewolf.shop/](https://gamewolf.shop/)
+- URL base de la API: [https://gamewolf.shop/api](https://gamewolf.shop/api)
+
+### Despliegue en VPS
+
+El proyecto está desplegado en el VPS del equipo. Nginx sirve el frontend compilado desde `frontend/dist` y funciona como proxy inverso para la API Laravel publicada desde `backend/public`. El dominio usa HTTPS con un certificado SSL gratuito de Let's Encrypt administrado con Certbot.
+
 ## Cómo abrir el proyecto en local
 
 Primero se necesita tener XAMPP/MySQL abierto y una base de datos llamada:
