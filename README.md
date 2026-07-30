@@ -1,50 +1,108 @@
 # GameWolf
 
-Sistema web para la gestion y venta de videojuegos.
+GameWolf es nuestro proyecto web para administrar y vender videojuegos de una forma más ordenada. La idea nació porque muchas tiendas llevan sus productos, clientes y pedidos de forma manual o en diferentes herramientas, y eso puede causar errores en el inventario, en las ventas o en el seguimiento de los pedidos.
+
+Con GameWolf buscamos que una tienda pueda tener en un solo lugar su catálogo de videojuegos, sus usuarios, sus pedidos, su carrito de compras y sus notificaciones.
 
 ## Integrantes
 
-- LUIS JARED GARCIA GARCIA
-- LEONARDO FUENTES LOPEZ
+- Luis Jared García García
+- Leonardo Fuentes López
 
-## Descripcion
+Equipo número 8.
 
-GameWolf es un sistema web para la gestion y venta de videojuegos. El sistema permite administrar videojuegos, usuarios, carritos y pedidos, ademas de ofrecer a los clientes la posibilidad de consultar el catalogo, realizar compras y dar seguimiento a sus pedidos.
+## ¿Qué problema resuelve?
+
+GameWolf ayuda a una tienda de videojuegos a controlar mejor sus productos y ventas. Los administradores y empleados pueden revisar el catálogo, registrar videojuegos, atender pedidos y consultar clientes. Los clientes pueden entrar al sistema, ver los videojuegos disponibles, agregarlos al carrito, confirmar una compra y revisar el estado de sus pedidos.
+
+También se está trabajando la comunicación con el cliente mediante correo electrónico y WhatsApp, para que el usuario pueda recibir avisos importantes relacionados con su cuenta o sus compras.
+
+## Roles del sistema
+
+### Administrador
+
+Es el usuario con más permisos dentro del sistema. Puede administrar videojuegos, géneros, usuarios, clientes, pedidos y reportes. También puede cambiar estados de pedidos y revisar la información general de la tienda.
+
+### Empleado
+
+Apoya en la operación diaria de la tienda. Puede consultar videojuegos, clientes y pedidos. También puede actualizar el estado de los pedidos, pero no puede administrar usuarios ni entrar a configuraciones del sistema.
+
+### Cliente
+
+Es quien compra dentro de la plataforma. Puede registrarse, iniciar sesión, consultar el catálogo, agregar videojuegos al carrito, confirmar compras, revisar sus pedidos y editar su perfil.
+
+## Módulos principales
+
+### Videojuegos
+
+Permite registrar, editar, eliminar y consultar videojuegos. Cada videojuego maneja título, descripción, precio, stock, imagen, plataforma y géneros.
+
+### Géneros
+
+Permite administrar categorías como acción, aventura, carreras, RPG, deportes, entre otras. Estos géneros se pueden asignar a los videojuegos para organizar mejor el catálogo.
+
+### Carrito de compras
+
+Permite que el cliente agregue videojuegos antes de confirmar su compra. Se pueden modificar cantidades, quitar productos y ver el total.
+
+### Pedidos
+
+Guarda las compras realizadas por los clientes. Cada pedido tiene cliente, fecha, estado y total. El administrador o empleado puede cambiar el estado del pedido.
+
+### Detalle del pedido
+
+Guarda los videojuegos que forman parte de cada pedido, junto con su cantidad, precio y subtotal.
+
+### Usuarios
+
+Permite registrar cuentas para administrador, empleado y cliente. Cada usuario tiene nombre, correo, contraseña, rol, teléfono e imagen de perfil.
+
+### Reportes
+
+Muestra información general de la tienda, como ingresos, pedidos por estado, pedidos de hoy y productos con bajo stock.
+
+## Diseño en Figma
+
+El diseño visual del sistema se trabajó en Figma para mantener una idea clara de cómo debía verse la aplicación. Se buscó una identidad tipo gamer, usando colores oscuros, azul brillante y morado para transmitir tecnología, energía y relación con videojuegos.
+
+- Diseño en Figma: [abrir archivo](https://www.figma.com/design/0p9So8xH9ZgsdcE6qDolP7/Sin-t%C3%ADtulo?node-id=0-1&t=7Aim8pIf3QMfQBgJ-1)
+- Prototipo navegable: [abrir prototipo](https://www.figma.com/proto/0p9So8xH9ZgsdcE6qDolP7/Sin-t%C3%ADtulo?node-id=5-85&p=f&t=BnMY9vRQTIQtdCpq-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=5%3A85)
+
+## Paleta de colores
+
+La paleta principal del proyecto usa colores oscuros combinados con azul neón y morado.
+
+- Azul neón: representa tecnología, energía y ambiente gamer.
+- Morado: se usa para resaltar botones, estados activos y acciones importantes.
+- Negro y azul oscuro: ayudan a que el sistema tenga un estilo más inmersivo y parecido a una interfaz de videojuegos.
+- Blanco y gris claro: se usan en el contenido para que la información se lea con claridad.
+
+Esta combinación permite que el sistema se vea llamativo, pero también ordenado para poder trabajar con tablas, formularios y reportes.
+
+## Logo
+
+El logo de GameWolf representa la mezcla entre un lobo y un control de videojuegos. Se eligió esta idea porque el lobo transmite fuerza e identidad, mientras que el control conecta directamente con el tema del proyecto.
 
 ## Estructura del proyecto
 
 ```text
 GAMEWOLF/
-  backend/   API REST con Laravel
-  frontend/  Aplicacion React con Vite
-  bruno/     Coleccion de pruebas de API
-  docs/      Documentacion, diagramas y notas del proyecto
-  assets/    Recursos visuales originales del proyecto
+  backend/   Parte del sistema que guarda datos y responde las peticiones
+  frontend/  Parte visual que usa el usuario en el navegador
+  bruno/     Pruebas para revisar las peticiones del sistema
+  docs/      Diagramas y documentos del proyecto
+  assets/    Imágenes y recursos visuales
 ```
 
-## Diagrama Entidad-Relación (ER) Y Diagrama Relacional
+## Cómo abrir el proyecto en local
 
-Diagrama ER <img width="1536" height="1024" alt="relacion gamewolf" src="https://github.com/user-attachments/assets/6287c0c0-e1c4-4538-8924-74b18acdc7c2" />
+Primero se necesita tener XAMPP/MySQL abierto y una base de datos llamada:
 
+```text
+gamewolf
+```
 
-
-Diagrama Relacional ![Diagrama Relacional de GameWolf](./docs/diagra-ER-Game.png)
-
-## Enlaces
-
-- Repositorio: https://github.com/JaredTareas/GAMEWOLF.git
-- GitHub Projects: https://github.com/users/JaredTareas/projects/1/views/1
-
-## Guia de continuidad
-
-Para revisar que esta hecho, como correr el proyecto y que falta por desarrollar:
-
-- [Guia para companero](docs/guia-para-companero.md)
-- [PDF para companero](docs/GameWolf-guia-para-companero.pdf)
-
-## Primeros comandos locales
-
-Backend:
+### Backend
 
 ```bash
 cd backend
@@ -55,7 +113,7 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Frontend:
+### Frontend
 
 ```bash
 cd frontend
@@ -63,45 +121,15 @@ npm install
 npm run dev
 ```
 
-En PowerShell, si aparece el error de scripts deshabilitados con `npm`, usa:
+Si PowerShell bloquea el comando de npm, se puede usar:
 
 ```bash
 npm.cmd run dev
 ```
 
-## Base de datos, seeders y respaldo
+## Usuarios de prueba
 
-- Motor usado: **MySQL 8 / InnoDB**. El proyecto no usa MariaDB.
-- Todas las tablas de negocio se crean con migraciones de Laravel; no se requiere crear tablas manualmente en phpMyAdmin.
-- `DatabaseSeeder` carga datos de demostración: 12 usuarios, 12 géneros, 12 videojuegos, 12 carritos, 12 pedidos, 24 detalles de pedido, 24 relaciones videojuego-género (N:M) y 12 registros de notificación.
-- Cada rol tiene usuarios de ejemplo y se conservan las credenciales de evaluación que aparecen abajo.
-
-Para reiniciar únicamente una base local de desarrollo y volver a cargar todos los datos de prueba:
-
-```bash
-cd backend
-php artisan migrate:fresh --seed
-```
-
-El archivo [gamewolf.sql](gamewolf.sql) es el respaldo de MySQL 8 actualizado. Para importarlo en una instancia local compatible:
-
-```bash
-mysql -u TU_USUARIO -p < gamewolf.sql
-```
-
-> `migrate:fresh --seed` elimina los datos actuales de la base seleccionada; úsalo solo en desarrollo o cuando se cuente con un respaldo.
-
-## API base
-
-Local:
-
-```text
-[http://127.0.0.1:8000/api](http://127.0.0.1:8000/api)
-```
-
-## Usuarios demo
-
-Todos usan la contrasena:
+Todos usan la misma contraseña:
 
 ```text
 GameWolf#2026
@@ -111,73 +139,69 @@ GameWolf#2026
 - Empleado: `empleado@gamewolf.test`
 - Cliente: `cliente@gamewolf.test`
 
-## Endpoints iniciales
+## Base de datos
 
-- `POST /api/autenticacion/registro`
-- `POST /api/autenticacion/iniciar-sesion`
-- `POST /api/autenticacion/recuperar-contrasena`
-- `POST /api/autenticacion/restablecer-contrasena`
-- `GET /api/autenticacion/perfil`
-- `POST /api/autenticacion/cerrar-sesion`
-- `GET /api/videojuegos`
-- `POST /api/videojuegos`
-- `GET /api/videojuegos/{videojuego}`
-- `PUT /api/videojuegos/{videojuego}`
-- `DELETE /api/videojuegos/{videojuego}`
-- `GET /api/carrito`
-- `POST /api/carrito/articulos`
-- `PUT /api/carrito/articulos/{articuloCarrito}`
-- `DELETE /api/carrito/articulos/{articuloCarrito}`
-- `GET /api/pedidos`
-- `POST /api/pedidos`
-- `GET /api/pedidos/{pedido}`
-- `PATCH /api/pedidos/{pedido}/estado`
-- `GET /api/usuarios`
-- `GET /api/usuarios/{usuario}`
-
-## Notificaciones por WhatsApp con Twilio
-
-La notificación de WhatsApp se dispara automáticamente cuando un administrador o empleado cambia el estado de un pedido desde el módulo de pedidos. No se envía si se intenta guardar el mismo estado que ya tenía el pedido.
-
-Flujo:
-
-1. El cliente realiza un pedido.
-2. El administrador o empleado actualiza el estado del pedido.
-3. El endpoint `PATCH /api/pedidos/{pedido}/estado` guarda el nuevo estado.
-4. El backend manda un mensaje de WhatsApp al teléfono del cliente usando Twilio.
-5. Cada intento queda guardado en la tabla `registros_notificacion`, con su estado, destinatario y respuesta del proveedor (incluido el SID de Twilio cuando fue aceptado).
-
-Variables necesarias en `backend/.env`:
-
-```env
-TWILIO_SID=tu_account_sid
-TWILIO_AUTH_TOKEN=tu_auth_token
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
-```
-
-El telefono del cliente debe estar guardado en formato E.164, por ejemplo:
+El sistema usa MySQL. Las tablas se crean con los comandos del backend, por eso no es necesario hacerlas manualmente. También se incluye el archivo:
 
 ```text
-+5215550001001
+gamewolf.sql
 ```
 
-Para WhatsApp en cuenta de prueba, el destinatario debe haber unido su número al sandbox de Twilio. Si faltan credenciales, el teléfono no tiene formato válido o Twilio rechaza el envío, el cambio de estado no se revierte: el intento queda registrado como `pendiente_configuracion` o `fallido` para auditoría.
+Ese archivo sirve como respaldo de la base de datos.
 
-## Correo de bienvenida por registro
+Para reiniciar los datos de prueba en local:
 
-Al registrar una cuenta mediante `POST /api/autenticacion/registro`, o al crearla desde el panel de usuarios, GameWolf envía un correo de bienvenida al email de la cuenta. El correo se crea con el Mailable `BienvenidaUsuario`, usa la vista Blade `resources/views/emails/bienvenida-usuario.blade.php` y deja una bitácora en `registros_notificacion`.
-
-Para Gmail con contraseña de aplicación se requiere SMTP. No se deben subir credenciales reales al repositorio:
-
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=465
-MAIL_SCHEME=smtps
-MAIL_USERNAME=gamewolf.proyecto@gmail.com
-MAIL_PASSWORD=contraseña_de_aplicacion
-MAIL_FROM_ADDRESS=gamewolf.proyecto@gmail.com
-MAIL_FROM_NAME="GameWolf"
+```bash
+cd backend
+php artisan migrate:fresh --seed
 ```
 
-También puede usarse el puerto 587 con `MAIL_SCHEME=smtp`; Laravel negociará STARTTLS cuando el servidor lo ofrezca. Después de cambiar variables de entorno en un servidor, ejecuta `php artisan optimize:clear` y reinicia el proceso de PHP.
+## Diagramas
+
+### Diagrama Entidad-Relación
+
+![Diagrama Entidad-Relación de GameWolf](https://github.com/user-attachments/assets/6287c0c0-e1c4-4538-8924-74b18acdc7c2)
+
+### Diagrama Relacional
+
+![Diagrama Relacional de GameWolf](./docs/diagra-ER-Game.png)
+
+## Comunicación con el cliente
+
+El sistema contempla notificaciones para mantener informado al cliente.
+
+Actualmente se trabaja con:
+
+- Correo de bienvenida cuando se registra o se crea una cuenta.
+- Recuperación de contraseña por correo.
+- Avisos de pedido por WhatsApp cuando cambia el estado de una compra.
+
+Para WhatsApp se dejó preparada la integración con Twilio. Para que funcione de forma real se deben colocar las credenciales correspondientes en el archivo `.env` del backend.
+
+## Avance actual
+
+Hasta el momento el sistema ya cuenta con:
+
+- Inicio de sesión por rol.
+- Registro de clientes.
+- Recuperación de contraseña.
+- Panel para administrador, empleado y cliente.
+- Gestión de videojuegos.
+- Gestión de géneros.
+- Gestión de usuarios.
+- Consulta de clientes.
+- Catálogo para clientes.
+- Carrito de compras.
+- Creación y seguimiento de pedidos.
+- Reportes básicos.
+- Foto de perfil.
+- Estados de carga visibles en acciones principales.
+- Diseño responsive para computadora y celular.
+- Prototipo en Figma.
+
+## Enlaces del proyecto
+
+- Repositorio: [GAMEWOLF](https://github.com/JaredTareas/GAMEWOLF.git)
+- GitHub Projects: [tablero del proyecto](https://github.com/users/JaredTareas/projects/1/views/1)
+- Diseño en Figma: [archivo de diseño](https://www.figma.com/design/0p9So8xH9ZgsdcE6qDolP7/Sin-t%C3%ADtulo?node-id=0-1&t=7Aim8pIf3QMfQBgJ-1)
+- Prototipo en Figma: [prototipo navegable](https://www.figma.com/proto/0p9So8xH9ZgsdcE6qDolP7/Sin-t%C3%ADtulo?node-id=5-85&p=f&t=BnMY9vRQTIQtdCpq-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=5%3A85)
