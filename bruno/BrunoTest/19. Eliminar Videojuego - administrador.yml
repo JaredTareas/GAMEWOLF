@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{base_url}}/videojuegos/14"
+  url: "{{base_url}}/videojuegos/{{videojuego_creado_id}}"
   auth:
     type: bearer
     token: "{{token_admin}}"

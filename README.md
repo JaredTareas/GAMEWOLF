@@ -17,6 +17,16 @@ GameWolf ayuda a una tienda de videojuegos a controlar mejor sus productos y ven
 
 También se está trabajando la comunicación con el cliente mediante correo electrónico y WhatsApp, para que el usuario pueda recibir avisos importantes relacionados con su cuenta o sus compras.
 
+## Tecnologías utilizadas
+
+- **Backend:** PHP y Laravel, con API REST, Eloquent, Form Requests y Laravel Sanctum.
+- **Frontend:** React, Vite, JavaScript, CSS y consumo de API mediante Fetch.
+- **Base de datos:** MySQL, migraciones, seeders y respaldo SQL.
+- **Comunicación:** Gmail SMTP para correos y Twilio WhatsApp para avisos de pedidos.
+- **Pruebas:** Bruno para probar endpoints de la API y PHPUnit para pruebas del backend.
+- **Despliegue:** VPS con Nginx, HTTPS y certificado SSL de Let's Encrypt/Certbot.
+- **Control y diseño:** Git, GitHub, GitHub Projects y Figma.
+
 ## Roles del sistema
 
 ### Administrador

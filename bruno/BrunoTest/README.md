@@ -25,7 +25,11 @@ Para que las variables se llenen solas, correr primero:
 3. `10. Videojuegos con filtro y paginacion`
 4. `11. Listar generos`
 
-Despues ya se pueden correr los endpoints de CRUD, carrito, pedidos, usuarios y reportes.
+Después ya se pueden correr los endpoints de CRUD, carrito, pedidos, usuarios y reportes respetando su numeración. Las secuencias que comparten datos temporales son:
+
+- `17 → 18 → 19`: crea, actualiza y elimina el mismo videojuego temporal.
+- `23 → 24 → 25`: crea, actualiza y elimina el mismo usuario temporal.
+- `26 → 27 → 28 → 29 → 30`: agrega un artículo, crea el pedido, lo consulta como cliente y actualiza su estado.
 
 ## Variables que se generan automaticamente
 
@@ -52,4 +56,4 @@ Despues ya se pueden correr los endpoints de CRUD, carrito, pedidos, usuarios y 
 - Reportes
 - Casos de error 401, 403, 404 y 422
 
-Nota: algunas pruebas crean registros temporales para demostrar POST, PUT y DELETE. Por eso se recomienda correrlas en el ambiente de pruebas o con datos de demostracion.
+Nota: algunas pruebas crean registros temporales para demostrar POST, PUT y DELETE. Por eso se recomienda correrlas en el ambiente de pruebas o con datos de demostración. Las pruebas de videojuego y usuario ya usan los IDs generados durante la misma ejecución; no eliminan IDs fijos de producción.

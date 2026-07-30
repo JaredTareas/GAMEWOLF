@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: "{{base_url}}/pedidos/1"
+  url: "{{base_url}}/pedidos/{{pedido_id}}"
   auth:
     type: bearer
-    token: "{{token_admin}}"
+    token: "{{token_cliente}}"
 
 runtime:
   scripts:
     - type: tests
       code: |-
-        test("El cliente puede consultar el pedido que creo", function() {
+        test("El cliente puede consultar el pedido que creó", function() {
           expect(res.status).to.equal(200);
           expect(res.body.data.id).to.equal(Number(bru.getVar("pedido_id")));
         });

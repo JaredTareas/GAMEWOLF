@@ -10,14 +10,14 @@ http:
     type: json
     data: |-
       {
-        "titulo": "FC26",
+        "titulo": "{{videojuego_titulo}}",
         "descripcion": "JUEGO DE SIMULACION DE FUTBALL",
         "plataforma": "PC",
         "precio": 499,
         "stock": 6,
         "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
         "estado": "activo",
-        "genero_ids": [2]
+        "genero_ids": ["{{genero_id}}"]
       }
   auth:
     type: bearer
@@ -25,6 +25,9 @@ http:
 
 runtime:
   scripts:
+    - type: pre-request
+      code: |-
+        bru.setVar("videojuego_titulo", "Videojuego Bruno " + Date.now());
     - type: after-response
       code: |-
         if(res.status === 201) {

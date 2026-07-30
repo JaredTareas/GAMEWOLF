@@ -5,10 +5,13 @@ info:
 
 http:
   method: GET
-  url: "{{base_url}}/videojuegos?per_page=15"
+  url: "{{base_url}}/videojuegos?per_page=2&estado=activo"
   params:
     - name: per_page
-      value: "15"
+      value: "2"
+      type: query
+    - name: estado
+      value: activo
       type: query
   auth: inherit
 
@@ -21,11 +24,14 @@ runtime:
         }
     - type: tests
       code: |-
-        test("El catálogo responde paginado y acepta filtros en la API", function() {
+        test("El catálogo responde paginado y filtra por estado en la API", function() {
           expect(res.status).to.equal(200);
           expect(res.body.data).to.be.an('array');
           expect(res.body.meta).to.be.an('object');
           expect(res.body.meta.per_page).to.equal(2);
+          res.body.data.forEach(function(videojuego) {
+            expect(videojuego.estado).to.equal('activo');
+          });
         });
 
 settings:

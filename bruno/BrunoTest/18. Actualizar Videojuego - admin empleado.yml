@@ -5,19 +5,19 @@ info:
 
 http:
   method: PUT
-  url: "{{base_url}}/videojuegos/15"
+  url: "{{base_url}}/videojuegos/{{videojuego_creado_id}}"
   body:
     type: json
     data: |-
       {
-        "titulo": "FC26",
+        "titulo": "{{videojuego_titulo_actualizado}}",
         "descripcion": "Videojuego actualizado desde Bruno.",
         "plataforma": "PC",
         "precio": 600,
         "stock": 8,
         "imagen": "https://wallpapercave.com/wp/wp15596619.jpg",
         "estado": "activo",
-        "genero_ids": ["3"]
+        "genero_ids": ["{{genero_id}}"]
       }
   auth:
     type: bearer
@@ -25,6 +25,9 @@ http:
 
 runtime:
   scripts:
+    - type: pre-request
+      code: |-
+        bru.setVar("videojuego_titulo_actualizado", "Videojuego Bruno Editado " + Date.now());
     - type: tests
       code: |-
         test("Admin o empleado puede actualizar videojuegos", function() {
